@@ -1,0 +1,9 @@
+/*.suo
+/*.sdf
+*.user
+/Release
+/bbp/Release
+/bbp/*.o
+/bbp/bochsdbg.txt
+/bbp/bochsout.txt
+/mbr/Release
