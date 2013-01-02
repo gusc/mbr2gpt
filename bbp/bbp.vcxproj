@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{3D779CE6-A610-49F7-AC07-992AEEB4115D}</ProjectGuid>
+    <RootNamespace>kernel</RootNamespace>
+    <ProjectName>bbp</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ExecutablePath>C:\MinGW\bin;C:\MinGW\msys\1.0\bin;C:\cross-gcc\i786-elf\bin;C:\cross-gcc\i786-elf\i786-elf\bin;$(SystemRoot)\system32</ExecutablePath>
+    <NMakeBuildCommandLine>make -C "$(ProjectDir)"
+buildimg.bat</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>del kmain.o main.o "..\Release\bbp.img" "..\Release\disk.img"</NMakeCleanCommandLine>
+    <IncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <SourcePath />
+    <ExcludePath />
+    <NMakeOutput>bbp.img</NMakeOutput>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="bbp.ld" />
+    <None Include="makefile" />
+    <None Include="main.asm" />
+    <None Include="kmain.c" />
+    <None Include="buildimg.bat" />
+    <None Include="run_bochs.bat" />
+    <None Include="run_bochs_debug.bat" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
