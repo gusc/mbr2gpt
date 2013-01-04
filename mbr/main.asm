@@ -242,7 +242,7 @@ bootstrap_start:								; Read bootable partition
 	je .end										; last iteration - pass control over to BBP code
 	dec cx										; decrement cx for the next iteration
 	mov eax, [DAP(dest_buff)]					; get current buffer position
-	add eax, 0x8000								; move forward by 32 KiB (64 sectors, yes bad assumption)
+	add eax, 0x8000000							; move forward by 32 KiB (just increment the f*ing segments - ugly)
 	mov [DAP(dest_buff)], eax					; set current buffer position
 	cmp cx, 0x0									; test if last iteration
 	jg .copy_block								; continiue with the next iteration
