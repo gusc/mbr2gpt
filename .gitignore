@@ -1,9 +1,11 @@
+*.user
+*.filter
+*.o
 /*.suo
 /*.sdf
-*.user
+/bochsdbg.txt
+/bochsout.txt
 /Release
+/ipch
 /bbp/Release
-/bbp/*.o
-/bbp/bochsdbg.txt
-/bbp/bochsout.txt
 /mbr/Release
