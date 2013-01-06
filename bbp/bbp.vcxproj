@@ -39,8 +39,6 @@ buildimg.bat</NMakeBuildCommandLine>
     <None Include="main.asm" />
     <None Include="kmain.c" />
     <None Include="buildimg.bat" />
-    <None Include="run_bochs.bat" />
-    <None Include="run_bochs_debug.bat" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
