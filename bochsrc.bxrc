@@ -15,7 +15,7 @@ vgaromimage: file="C:\Program Files\Bochs-2.6\VGABIOS-lgpl-latest"
 
 # hard disk
 ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
-ata0-master: type=disk, path="..\Release\disk.img", mode=flat, cylinders=10, heads=16, spt=63
+ata0-master: type=disk, path="Release\disk.img", mode=flat, cylinders=10, heads=16, spt=63
 
 # choose the boot disk.
 boot: c
