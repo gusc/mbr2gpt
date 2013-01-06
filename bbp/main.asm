@@ -1,7 +1,7 @@
 .section .rodata
 
 gdt:
-	# Null Descriptor
+	# Null Descriptor (selector: 0x00)
 	.word 0x0000
 	.word 0x0000
 	.byte 0x00
@@ -9,7 +9,7 @@ gdt:
 	.byte 0x00
 	.byte 0x00
 
-	# Code Descriptor
+	# Code Descriptor (selector: 0x08)
 	.word 0xffff		# Limit
 	.word 0x0000		# Base (low word)
 	.byte 0x00			# Base (high word low byte)
@@ -17,7 +17,7 @@ gdt:
 	.byte 0xcf			# Limit (high nibble, 4bits) + flags (nibble)
 	.byte 0x00			# Base (high word high byte)
 
-	# Data Descriptor
+	# Data Descriptor (selector: 0x10)
 	.word 0xffff		# Limit
 	.word 0x0000		# Base (low word)
 	.byte 0x00			# Base (high word low byte)
@@ -41,7 +41,6 @@ Start:
 	movw $0x7C00, %sp
 	movw %ax, %es
 	movw %ax, %ds
-	jmp SetVideoMode
 
 SetVideoMode:
 	clrb %ah				# Set Video Mode
@@ -57,13 +56,12 @@ ClearScreen:
 	movb $80, %dl			# 80 Columns
 	int $0x10				# Video Interrupt
 
-	cli
-
 SetA20:
+	cli
 	inb $0x92, %al			# Enable A20 Gate
 	testb $0x2, %al			# to access to more than
 	outb %al, $0x92			# 1 Mega Byte of memory
-
+	
 LoadGDT:
 	lgdt gdtptr				# Load Global Descriptor Table
 	
@@ -79,11 +77,10 @@ EnterProtectedMode:
 	#  0x8	= CodeDescriptor
 	#  0x10	= DataDescriptor
 	ljmp $0x8, $SetupSelectors
-
 	.code32
 
 SetupSelectors:
-	movw $0x0010, %ax		# Selector 0x0010
+	movw $0x0010, %ax		# Selector 0x10 - data descriptor
 	movw %ax, %ds			# Set Data Segment
 	movw %ax, %es			# Set Extra Segment
 	movw %ax, %fs			# Set Data2 Segment
