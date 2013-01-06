@@ -25,7 +25,7 @@
 ; 0x0700 - MBR bootstrap after relocation (curently it looks like just 16 bytes)
 ; 0x0800 - Read buffer location (512 bytes usually)
 ; 0x7C00 - Stack pointer
-; 0x7C00 - 0x0007FFFF - Bootloader code loaded by MBR bootstrap (read buffer location in memory)
+; 0x7C00 - ??? - Bootloader code loaded by MBR bootstrap (we need atleas 512KiB or 1024 sectors)
 
 ; Code location constants
 %define ORG_LOC			0x7C00					; Initial MBR position in memory (where BIOS loads it)
@@ -122,6 +122,16 @@ start:											; Start MBR procedures
 	mov [DAP(dest_buff)], dword BUFF_LOC		; set read buffer position in memory
 	mov [DAP(lba_start_l)], dword 0x0			; clear start LBA low dword
 	mov [DAP(lba_start_h)], dword 0x0			; clear start LBA high dword
+
+test_mem:										; Get available lower memory ammount
+	int 0x12									; call memory interrupt
+	jc $										; hang if interrupt call failed
+	test ax, ax									; check if memory is more than 0 (weird instruction - got to wrap my head around this)
+	jz $										; hang if ax is 0 (right?)
+	sub ax, 0x001F								; 0x7C00 / 1024 = 0x001F
+												; we need to know if we have a region between 0x7C00 and 0xA0000 which is at least 512KiB
+	cmp ax, 0x0200								; test weather it's enough
+	jl $										; hang if not enough memory	
 	
 test_mbr_part:									; Test weather we are a protective MBR, we certanly don't want to be a hybrid MBR
 	cmp [MBR(type)], byte 0xEE					; check weather we have GPT partitioning (0xEE - GPT protective partition)
@@ -224,31 +234,25 @@ bootstrap_start:								; Read bootable partition
 	xor ebx, ebx								; clear ebx
 	xor ecx, ecx								; clear ecx
 	mov eax, dword [DATA(bbp_size)]				; copy boot partition sector count
-	cmp eax, 0x03C0								; test if not bigger than 960 sectors (480 KiB)
+	cmp eax, 0x0400								; test if not bigger than 1024 sectors (512 KiB)
 	jle	.prep_copy_loop							; continiue if less or equal
-	mov eax, 0x03C0								; limit to 960 sectors only
+	mov eax, 0x0400								; limit to 1024 sectors only
 .prep_copy_loop:
-	mov bx, 0x0040								; 64 sectors per iteration
+	mov bx, 0x0040								; 64 sectors per iteration (32 KiB)
 	div bx										; calculate iteration count
 	mov cx, ax									; set iteration count
-	mov bx, dx									; set last iteration length
 .copy_block:
 	mov ah, 0x42								; command - extended read
 	mov dl, [DATA(drive_id)]					; set drive ID
 	mov si, DAP_LOC								; set DAP location
 	int	0x13									; call disk interrupt
 	jc $										; halt on error
+	dec cx										; decrement cx for the next iteration
 	cmp cx, 0x0									; test if not the final iteration
 	je .end										; last iteration - pass control over to BBP code
-	dec cx										; decrement cx for the next iteration
 	mov eax, [DAP(dest_buff)]					; get current buffer position
 	add eax, 0x8000000							; move forward by 32 KiB (just increment the f*ing segments - ugly)
 	mov [DAP(dest_buff)], eax					; set current buffer position
-	cmp cx, 0x0									; test if last iteration
-	jg .copy_block								; continiue with the next iteration
-	cmp bx, 0x0									; test if there is anything left to copy
-	je .end										; noting left to copy - pass control over to BBP code
-	mov [DAP(lba_count)], word bx				; copy only remaining sectors
 	jmp .copy_block								; next pass
 .end:
 	jmp 0x0000:BOOT_LOC							; pass control over to BBP code
