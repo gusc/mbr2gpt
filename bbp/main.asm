@@ -1,12 +1,5 @@
 .section .rodata
 
-msg:
-	.asciz "kernel..."
-msgend:
-
-msglen:
-	.word (msgend - msg)
-
 gdt:
 	# Null Descriptor
 	.word 0x0000
@@ -62,17 +55,6 @@ ClearScreen:
 	clrw %cx				# Upper Left Corner
 	movb $25, %dh			# 25 Lines
 	movb $80, %dl			# 80 Columns
-	int $0x10				# Video Interrupt
-
-PrintMsg:
-	movw $msg, %bp			# Set base pointer to msg location
-	movb $0x13, %ah			# Print String
-	movb $0x01, %al			# Char only - Cursor moved
-	clrb %bh				# Page Number
-	movb $0x03, %bl			# Color Black Blue
-	movw msglen, %cx		# Message Length
-	movb $3, %dh			# Row 3 
-	movb $1, %dl			# Column 1
 	int $0x10				# Video Interrupt
 
 	cli

@@ -3,7 +3,7 @@ unsigned int k_printf(char *message, unsigned int line);
 
 void kmain(){
 	//k_clear_screen();
-	k_printf("Hi!\nHow's this for a starter OS?", 0);
+	k_printf("BBP is working fine!", 0);
 }
 
 void k_clear_screen(){
