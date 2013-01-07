@@ -7,6 +7,7 @@
 [global idt_set]								; Export idt_set to C
 
 gdt_set:										; prototype: void gdt_set(uint32 gdt_ptr)
+	xchg bx, bx
     mov eax, [esp + 4]							; get the pointer to the GDT, passed as a parameter.
     lgdt [eax]									; load the new GDT
 
@@ -21,6 +22,7 @@ gdt_set:										; prototype: void gdt_set(uint32 gdt_ptr)
     ret											; return to C
 
 idt_set:										; prototype: void idt_set(uint32 idt_ptr)
+	xchg bx, bx
     mov eax, [esp+4]							; get the pointer to the IDT, passed as a parameter. 
 	lidt [eax]									; load the IDT
     ret											; return to C

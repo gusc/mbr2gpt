@@ -6,21 +6,21 @@
 
 ; Macro to create an intterupt service routine for interrupts that do not pass error codes 
 %macro INT_NO_ERR 1
-  global int_service_routine%1
+  global isr%1
   isr%1:
     cli											; disable interrupts
     push byte 0									; set error code to 0
     push byte %1								; set interrupt number
-    jmp int_wrapper								; jump to our local handler
+    jmp isr_handler								; jump to our local handler
 %endmacro
 
 ; Macro to create an interrupt service routine for interrupts that DO pass an error code
 %macro INT_HAS_ERR 1
-  global int_service_routine%1
+  global isr%1
   isr%1:
     cli											; disable interrupts
     push byte %1								; set interrupt number
-    jmp int_wrapper								; jump to our local handler
+    jmp isr_handler								; jump to our local handler
 %endmacro
 
 ; Setup all the neccessary service routines with macros
@@ -57,7 +57,7 @@ INT_NO_ERR 29
 INT_NO_ERR 30
 INT_NO_ERR 31
 
-int_wrapper:									; Local interrupt handler wrapper
+isr_handler:									; Local interrupt handler
     pusha										; push all the register on the stack edi,esi,ebp,esp,ebx,edx,ecx,eax
 	mov ax, ds									; store ds in lower 16-bits of eax
     push eax									; save the data segment descriptor

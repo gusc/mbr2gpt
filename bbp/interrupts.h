@@ -11,37 +11,40 @@ typedef struct registers
     uint32 eip, cs, eflags, useresp, ss;			// Pushed by the processor automatically.
 } registers_t;
 
-extern void int_service_routine0();
-extern void int_service_routine1();
-extern void int_service_routine2();
-extern void int_service_routine3();
-extern void int_service_routine4();
-extern void int_service_routine5();
-extern void int_service_routine6();
-extern void int_service_routine7();
-extern void int_service_routine8();
-extern void int_service_routine9();
-extern void int_service_routine10();
-extern void int_service_routine11();
-extern void int_service_routine12();
-extern void int_service_routine13();
-extern void int_service_routine14();
-extern void int_service_routine15();
-extern void int_service_routine16();
-extern void int_service_routine17();
-extern void int_service_routine18();
-extern void int_service_routine19();
-extern void int_service_routine20();
-extern void int_service_routine21();
-extern void int_service_routine22();
-extern void int_service_routine23();
-extern void int_service_routine24();
-extern void int_service_routine25();
-extern void int_service_routine26();
-extern void int_service_routine27();
-extern void int_service_routine28();
-extern void int_service_routine29();
-extern void int_service_routine30();
-extern void int_service_routine31();
+void interrupt_handler(registers_t regs);
+
+// Defined in interrupts.asm (with macros!)
+extern void isr0();
+extern void isr1();
+extern void isr2();
+extern void isr3();
+extern void isr4();
+extern void isr5();
+extern void isr6();
+extern void isr7();
+extern void isr8();
+extern void isr9();
+extern void isr10();
+extern void isr11();
+extern void isr12();
+extern void isr13();
+extern void isr14();
+extern void isr15();
+extern void isr16();
+extern void isr17();
+extern void isr18();
+extern void isr19();
+extern void isr20();
+extern void isr21();
+extern void isr22();
+extern void isr23();
+extern void isr24();
+extern void isr25();
+extern void isr26();
+extern void isr27();
+extern void isr28();
+extern void isr29();
+extern void isr30();
+extern void isr31();
 
 #endif

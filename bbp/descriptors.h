@@ -46,4 +46,7 @@ struct idt_ptr_struct {
 } __attribute__((packed));
 typedef struct idt_ptr_struct idt_ptr_t;
 
+extern void gdt_set(uint32 gdt_ptr);
+extern void idt_set(uint32 idt_ptr);
+
 #endif
