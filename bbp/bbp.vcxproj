@@ -35,8 +35,15 @@ buildimg.bat</NMakeBuildCommandLine>
   </PropertyGroup>
   <ItemGroup>
     <None Include="boot.asm" />
-    <None Include="main.asm" />
+    <None Include="descriptors.asm" />
+    <None Include="interrupts.asm" />
     <None Include="kmain.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common.h" />
+    <ClInclude Include="descriptors.h" />
+    <ClInclude Include="interrupts.h" />
+    <ClInclude Include="kmain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

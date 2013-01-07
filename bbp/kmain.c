@@ -1,5 +1,4 @@
-void k_clear_screen();
-unsigned int k_printf(char *message, unsigned int line);
+#include "kmain.h"
 
 void kmain(){
 	k_clear_screen();
@@ -38,4 +37,8 @@ unsigned int k_printf(char *message, unsigned int line){
 	}
 
 	return 1;
+}
+
+void interrupt_handler(registers_t regs){
+
 }
