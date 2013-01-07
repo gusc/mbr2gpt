@@ -27,7 +27,7 @@
 ; 0x7C00 - Stack pointer
 ; 0x7C00 - ??? - Bootloader code loaded by MBR bootstrap (we need atleas 512KiB or 1024 sectors)
 
-%include "main.inc"								; Include data structures and memory location constants
+%include "main.inc"							; Include data structures and memory location constants
 
 ; Remember in NASM it's:
 ; instruction destination, source

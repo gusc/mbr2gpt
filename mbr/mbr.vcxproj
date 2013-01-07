@@ -21,8 +21,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ExecutablePath>C:\Program Files\Netwide Assembler</ExecutablePath>
-    <NMakeBuildCommandLine>nasm -f bin -o "..\Release\mbr.img" main.asm</NMakeBuildCommandLine>
+    <ExecutablePath>C:\MinGW\bin;C:\MinGW\msys\1.0\bin;C:\Program Files\Netwide Assembler</ExecutablePath>
+    <NMakeBuildCommandLine>make -C "$(ProjectDir)"</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>del "..\Release\mbr.img"</NMakeCleanCommandLine>
     <IncludePath />

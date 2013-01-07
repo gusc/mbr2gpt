@@ -6,8 +6,8 @@ This is the MBR bootcode that read GPT headers and partition array and loads fir
 File list
 ---------
 
-* main.asm - main MBR code
-* main.inc - data structure definitions and memory location definitions
+* src/main.asm - main MBR code
+* src/main.inc - data structure definitions and memory location definitions
 * mbr.vcxproj - Visual Studio 2010 project file
 
 

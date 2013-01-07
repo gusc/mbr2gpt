@@ -25,7 +25,7 @@
     <NMakeBuildCommandLine>make -C "$(ProjectDir)"
 buildimg.bat</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>del kmain.o main.o "..\Release\bbp.img" "..\Release\disk.img"</NMakeCleanCommandLine>
+    <NMakeCleanCommandLine>del *.o "..\Release\bbp.img" "..\Release\disk.img"</NMakeCleanCommandLine>
     <IncludePath />
     <ReferencePath />
     <LibraryPath />
@@ -34,12 +34,9 @@ buildimg.bat</NMakeBuildCommandLine>
     <NMakeOutput>bbp.img</NMakeOutput>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="bbp.ld" />
     <None Include="boot.asm" />
-    <None Include="makefile" />
     <None Include="main.asm" />
     <None Include="kmain.c" />
-    <None Include="buildimg.bat" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

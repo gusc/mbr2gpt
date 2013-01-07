@@ -1,7 +1,6 @@
-AS = nasm.exe -felf
-#i786-elf-as.exe
-CC = i786-elf-gcc.exe -march=i686 -nostdlib -fno-builtin -nostartfiles -nodefaultlibs
-LD = i786-elf-ld.exe
+AS = nasm -felf
+CC = i786-elf-gcc -march=i686 -nostdlib -fno-builtin -nostartfiles -nodefaultlibs
+LD = i786-elf-ld
 
 all: bbp.img
 
@@ -18,4 +17,4 @@ kmain.o: kmain.c
 	$(CC) -c kmain.c
 
 clean:
-	rm -f main.o kmain.o ../Release/bbp.img
+	rm -f boot.o main.o kmain.o ../Release/bbp.img ../Release/disk.img
