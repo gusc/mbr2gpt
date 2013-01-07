@@ -1,7 +1,7 @@
 BIOS Boot Partition
 ===================
 
-This is the BBO bootcode that get's loaded by MBR.
+This is the BBP bootcode that get's loaded by MBR.
 
 File list
 ---------
