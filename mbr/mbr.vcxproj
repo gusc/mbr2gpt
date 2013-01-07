@@ -32,9 +32,9 @@
     <ExcludePath />
     <NMakeOutput>mbr.img</NMakeOutput>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="main.asm" />
+    <None Include="main.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

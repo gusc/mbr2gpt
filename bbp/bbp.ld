@@ -1,7 +1,11 @@
 OUTPUT_FORMAT(binary)
-ENTRY(Start)
+ENTRY(start)
 SECTIONS{
-	.text 0x7c00 : { *(.text) }
+	.text 0x7C00 : { 
+		boot.o(.text)
+		kmain.o(.text)
+		main.o(.text)
+	}
 	.rodata : { *(.rodata) }
 	.data : { *(.data) }
 }

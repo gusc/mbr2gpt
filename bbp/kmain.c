@@ -2,7 +2,7 @@ void k_clear_screen();
 unsigned int k_printf(char *message, unsigned int line);
 
 void kmain(){
-	//k_clear_screen();
+	k_clear_screen();
 	k_printf("BBP is working fine!", 0);
 }
 

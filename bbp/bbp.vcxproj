@@ -21,7 +21,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ExecutablePath>C:\MinGW\bin;C:\MinGW\msys\1.0\bin;C:\cross-gcc\i786-elf\bin;C:\cross-gcc\i786-elf\i786-elf\bin;$(SystemRoot)\system32</ExecutablePath>
+    <ExecutablePath>C:\MinGW\bin;C:\MinGW\msys\1.0\bin;C:\cross-gcc\i786-elf\bin;C:\cross-gcc\i786-elf\i786-elf\bin;C:\Program Files\Netwide Assembler;$(SystemRoot)\system32</ExecutablePath>
     <NMakeBuildCommandLine>make -C "$(ProjectDir)"
 buildimg.bat</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
@@ -35,6 +35,7 @@ buildimg.bat</NMakeBuildCommandLine>
   </PropertyGroup>
   <ItemGroup>
     <None Include="bbp.ld" />
+    <None Include="boot.asm" />
     <None Include="makefile" />
     <None Include="main.asm" />
     <None Include="kmain.c" />
