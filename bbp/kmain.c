@@ -5,12 +5,14 @@
 idt_entry_t idt[256];
 idt_ptr_t   idt_ptr;
 
+static uint32 screen_line = 0;
+
 static void interrupt_init();
 static void idt_set_entry(uint8 num, uint32 base, uint16 sel, uint8 flags);
 
 void kmain(){
-	screen_clear();
-	screen_printf("BBP is working fine!", 0);
+	screen_clear(0x07);
+	screen_print("BBP is working fine!", 0x05, screen_line++);
 
 	interrupt_init();
 }
@@ -19,7 +21,7 @@ static void interrupt_init(){
 	idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
     idt_ptr.base  = (uint32)&idt;
 
-    memset((uint8 *)&idt, 0, sizeof(idt_entry_t)*256);
+    mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t)*256);
 
     idt_set_entry( 0, (uint32)isr0 , 0x08, 0x8E);
     idt_set_entry( 1, (uint32)isr1 , 0x08, 0x8E);
@@ -70,5 +72,5 @@ static void idt_set_entry(uint8 num, uint32 base, uint16 sel, uint8 flags)
 }
 
 void interrupt_handler(registers_t regs){
-	screen_printf("Interrupt", 0);
+	screen_print("Interrupt", 0x08, screen_line++);
 }

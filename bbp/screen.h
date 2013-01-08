@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-void screen_clear();
-uint32 screen_printf(char *message, uint32 line);
+void screen_clear(uint8 color);
+void screen_print(char *message, uint8 color, uint32 line);
 
 #endif

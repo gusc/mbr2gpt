@@ -62,11 +62,9 @@ typedef float			float32;
 typedef double			float64;
 
 typedef struct {
-	uint32 data1;
-	uint16 data2;
-	uint16 data3;
-	uint8 data4[8];
-} guid_t;
+	char *buff;
+	uint64 len;
+} string;
 
 typedef void *handle_t;
 #define null 0

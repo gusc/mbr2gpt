@@ -46,10 +46,12 @@ buildimg.bat</NMakeBuildCommandLine>
     <ClInclude Include="kmain.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="screen.h" />
+    <ClInclude Include="string.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="memory.c" />
     <ClCompile Include="screen.c" />
+    <ClCompile Include="string.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

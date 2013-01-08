@@ -7,4 +7,5 @@ SECTIONS{
 	}
 	.rodata : { *(.rodata) }
 	.data : { *(.data) }
+	. = ALIGN(512);
 }

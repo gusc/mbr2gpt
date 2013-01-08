@@ -1,17 +1,17 @@
 #include "screen.h"
 
-void screen_clear(){
+void screen_clear(uint8 color){
 	char *vidmem = (char *) 0xb8000;
 	unsigned int i = 0;
 	while(i < (80*25*2)){
 		vidmem[i] = ' ';
 		i++;
-		vidmem[i] = 0x07;
+		vidmem[i] = color;
 		i++;
 	}
 }
 
-uint32 screen_printf(char *message, uint32 line){
+void screen_print(char *message, uint8 color, uint32 line){
 	char *vidmem = (char *) 0xb8000;
 	uint32 i=0;
 
@@ -26,10 +26,8 @@ uint32 screen_printf(char *message, uint32 line){
 			vidmem[i] = *message;
 			*message++;
 			i++;
-			vidmem[i] = 0x05;
+			vidmem[i] = color;
 			i++;
 		}
 	}
-
-	return 1;
 }

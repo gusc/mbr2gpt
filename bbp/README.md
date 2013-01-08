@@ -14,6 +14,9 @@ File list
 * descriptors.h - GDT and IDT C data structures
 * interrupts.asm - interrupt service routines
 * interrupts.h - intterupt service routine import in C
+* screen.* - screen writing functions
+* memory.* - memory functions
+* string.* - string functions
 * bbp.ld - BBP linker script
 * makefile - Make build script
 * buildimg.bat - Bach script to merge MBR and BBP code into Bochs disk image file using DiskUtils
