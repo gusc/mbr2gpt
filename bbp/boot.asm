@@ -102,6 +102,5 @@ setup:											; Setup all the data segments
 exec_main:										; Transfer controll to C
 	sti											; enable interrupts
 	call kmain									; call C function kmain() (see: kmain.c)
-	jmp $										; hang!
 	cli											; disable interrupts
 	

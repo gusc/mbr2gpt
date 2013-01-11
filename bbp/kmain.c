@@ -2,6 +2,7 @@
 #include "screen.h"
 #include "memory.h"
 #include "string.h"
+#include "io.h"
 
 idt_entry_t idt[256];
 idt_ptr_t   idt_ptr;
@@ -45,6 +46,7 @@ void kmain(){
 	uint32 c = a / b; // Invoke int 0x00
 
 	asm volatile("int $0x3"); // Invoke "breakpoint"
+	while(1){} // Infinite loop
 }
 
 static void interrupt_init(){

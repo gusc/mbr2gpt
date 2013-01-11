@@ -43,6 +43,7 @@ buildimg.bat</NMakeBuildCommandLine>
     <ClInclude Include="common.h" />
     <ClInclude Include="descriptors.h" />
     <ClInclude Include="interrupts.h" />
+    <ClInclude Include="io.h" />
     <ClInclude Include="kmain.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="screen.h" />
