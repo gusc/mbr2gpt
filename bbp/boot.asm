@@ -100,7 +100,8 @@ setup:											; Setup all the data segments
 	mov ss, ax									; set Stack Segment
 
 exec_main:										; Transfer controll to C
-	sti											; enagble interrupts
+	sti											; enable interrupts
 	call kmain									; call C function kmain() (see: kmain.c)
-	cli											; disable interrupts
 	jmp $										; hang!
+	cli											; disable interrupts
+	

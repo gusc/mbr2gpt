@@ -19,7 +19,7 @@ uint32 int_to_str(int32 val, char *dest, uint32 len){
 	static char tmp[MAX_INT_STR + 1];
 	tmp[MAX_INT_STR] = 0;
 	char *b = (char *)tmp + MAX_INT_STR;
-	if (val > 0){
+	if (val >= 0){
 		// Process positive value
 		do {
 			*--b = '0' + (val % 10);
@@ -42,7 +42,7 @@ int32 str_to_int(const char *src){
 	int32 val = 0;
 	uint8 negative = 0;
 	// Trim leading spaces
-	while (*b == ' ' || *b == '\s' || *b == '\t'){
+	while (*b == 0x20 || *b == 0x09){ // space || tab
 		b++;
 	}
 	// Check if a negative number

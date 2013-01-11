@@ -32,7 +32,7 @@ INT_NO_ERR 4
 INT_NO_ERR 5
 INT_NO_ERR 6
 INT_NO_ERR 7
-INT_HAS_ERR 8
+INT_NO_ERR 8 ; By all specs int 8 is double fault WITH error message, but not in Bochs, WHY?
 INT_NO_ERR 9
 INT_HAS_ERR 10
 INT_HAS_ERR 11
@@ -68,7 +68,7 @@ isr_handler:									; Local interrupt handler
 	mov gs, ax									; set Data3 Segment
 
     call interrupt_handler						; call our interrupt_handler() C function 
-
+	
     pop ebx										; reload the original data segment descriptor
     mov ds, bx									; set Data Segment
     mov es, bx									; set Extra Segment
