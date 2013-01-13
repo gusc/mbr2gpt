@@ -1,4 +1,5 @@
 #include "string.h"
+#include "memory.h"
 
 #define MAX_INT_STR 20
 
@@ -17,7 +18,7 @@ uint32 str_copy(const char *src, char *dest, uint32 len){
 
 uint32 int_to_str(int32 val, char *dest, uint32 len){
 	static char tmp[MAX_INT_STR + 1];
-	tmp[MAX_INT_STR] = 0;
+	mem_set(0, (uint8 *)tmp, MAX_INT_STR + 1);
 	char *b = (char *)tmp + MAX_INT_STR;
 	if (val >= 0){
 		// Process positive value

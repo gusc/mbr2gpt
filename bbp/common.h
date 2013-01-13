@@ -68,6 +68,8 @@ typedef struct {
 
 typedef void *handle_t;
 #define null 0
+#define true 1
+#define false 0
 
 // Packed types
 typedef union {

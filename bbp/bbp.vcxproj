@@ -40,6 +40,7 @@ buildimg.bat</NMakeBuildCommandLine>
     <None Include="kmain.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="acpi.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="descriptors.h" />
     <ClInclude Include="interrupts.h" />
@@ -50,6 +51,7 @@ buildimg.bat</NMakeBuildCommandLine>
     <ClInclude Include="string.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="acpi.c" />
     <ClCompile Include="memory.c" />
     <ClCompile Include="screen.c" />
     <ClCompile Include="string.c" />
