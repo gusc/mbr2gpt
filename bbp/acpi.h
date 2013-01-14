@@ -35,7 +35,92 @@ typedef struct {
 	uint32 creator_id;
 	uint32 creator_revision;
 } SDTHeader_t;
-
+/**
+* Root System Descriptor table
+*/
+typedef struct {
+	SDTHeader_t h;
+	uint32 ptr; // This actually is an array, but we're going to use it as an offset
+} RSDT_t;
+/**
+* Generic Address structure
+*/
+typedef struct {
+	uint8 address_space;
+	uint8 bit_width;
+	uint8 bit_offset;
+	uint8 access_size;
+	uint64 address;
+} GAS_t;
+/**
+* Fixed ACPI Description Table structure
+*/
+typedef struct {
+	SDTHeader_t h;
+	uint32 firmware_ctrl;
+	uint32 dsdt;
+ 
+	// field used in ACPI 1.0; no longer in use, for compatibility only
+	uint8 reserved;
+ 
+	uint8  pref_pmp;
+	uint16 sci_interrupt;
+	uint32 smi_command_port;
+	uint8  acpi_enable;
+	uint8  acpi_disable;
+	uint8  s4_bios_req;
+	uint8  pstate_control;
+	uint32 PM1aEventBlock;
+	uint32 PM1bEventBlock;
+	uint32 PM1aControlBlock;
+	uint32 PM1bControlBlock;
+	uint32 PM2ControlBlock;
+	uint32 PMTimerBlock;
+	uint32 GPE0Block;
+	uint32 GPE1Block;
+	uint8  PM1EventLength;
+	uint8  PM1ControlLength;
+	uint8  PM2ControlLength;
+	uint8  PMTimerLength;
+	uint8  GPE0Length;
+	uint8  GPE1Length;
+	uint8  GPE1Base;
+	uint8  cstate_control;
+	uint16 worst_C2_latency;
+	uint16 worst_C3_latency;
+	uint16 flush_size;
+	uint16 flush_stride;
+	uint8  duty_offset;
+	uint8  duty_width;
+	uint8  day_alarm;
+	uint8  month_alarm;
+	uint8  century;
+ 
+	// reserved in ACPI 1.0; used since ACPI 2.0+
+	uint16 boot_arch_flags;
+ 
+	uint8  reserved2;
+	uint32 flags;
+ 
+	// 12 byte structure; see below for details
+	GAS_t reset_reg;
+ 
+	uint8 reset_value;
+	uint8 reserved3[3];
+ 
+	// 64bit pointers - Available on ACPI 2.0+
+	uint64 X_FirmwareControl;
+	uint64 X_Dsdt;
+ 
+	GAS_t X_PM1aEventBlock;
+	GAS_t X_PM1bEventBlock;
+	GAS_t X_PM1aControlBlock;
+	GAS_t X_PM1bControlBlock;
+	GAS_t X_PM2ControlBlock;
+	GAS_t X_PMTimerBlock;
+	GAS_t X_GPE0Block;
+	GAS_t X_GPE1Block;
+} FADT_t;
 
 /**
 * Scan through memory and locate RSDP.

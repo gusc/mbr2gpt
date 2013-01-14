@@ -54,8 +54,10 @@ void kmain(){
 	screen_print_int((uint32)rsdp, 0x07, sx, sy++);
 
 	char sign[4] = {'F', 'A', 'C', 'P'};
-	SDTHeader_t *fadt = acpi_table(sign);
-	screen_print_int((uint32)fadt, 0x07, sx, sy++);
+	FADT_t *fadt = (FADT_t *)acpi_table(sign);
+	if (fadt != null){
+		screen_print_str("found FADT", 0x07, sx, sy++);
+	}
 
 	// Infinite loop
 	while(true){}
