@@ -47,6 +47,6 @@ RSDP_t *acpi_find();
 * @param const char *[in] - table signature (name)
 * @return SDTHeader_t * - pointer to table header (from here on you can locate all the other data)
 */
-SDTHeader_t *acpi_table(const RSDP_t *pointer, const char signature[4]);
+SDTHeader_t *acpi_table(const char signature[4]);
 
 #endif

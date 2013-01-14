@@ -50,8 +50,12 @@ void kmain(){
 
 	//asm volatile("int $0x3"); // Invoke "breakpoint"
 	
-	RSDP_t *dp = acpi_find();
-	screen_print_int((uint32)dp, 0x07, sx, sy++);
+	RSDP_t *rsdp = acpi_find();
+	screen_print_int((uint32)rsdp, 0x07, sx, sy++);
+
+	char sign[4] = {'F', 'A', 'C', 'P'};
+	SDTHeader_t *fadt = acpi_table(sign);
+	screen_print_int((uint32)fadt, 0x07, sx, sy++);
 
 	// Infinite loop
 	while(true){}

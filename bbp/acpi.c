@@ -38,12 +38,13 @@ SDTHeader_t *acpi_table(const char signature[4]){
 	if (rsdp != null){
 		SDTHeader_t *h;
 		SDTHeader_t *th;
+		uint32 i;
 		if (rsdp->revision == 0){
 			h = (SDTHeader_t *)rsdp->RSDT_address;
 		} else {
 			h = (SDTHeader_t *)rsdp->XSDT_address;
 		}
-		for (uint32 i = 0; i < (h->length - sizeof(SDTHeader_t)) / 4; i ++){
+		for (i = 0; i < (h->length - sizeof(SDTHeader_t)) / 4; i ++){
 			th = (SDTHeader_t *)(h + sizeof(SDTHeader_t) + (i * 4));
 			if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
 				return th;
