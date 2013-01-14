@@ -64,16 +64,16 @@ static void interrupt_init(){
 	mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t)*256);
 
 	// Remap the IRQ table.
-	outb(0x20, 0x11);
-	outb(0xA0, 0x11);
-	outb(0x21, 0x20);
-	outb(0xA1, 0x28);
-	outb(0x21, 0x04);
-	outb(0xA1, 0x02);
-	outb(0x21, 0x01);
-	outb(0xA1, 0x01);
-	outb(0x21, 0x0);
-	outb(0xA1, 0x0);
+	outb(0x20, 0x11); // Initialize master PIC
+	outb(0xA0, 0x11); // Initialize slave PIC
+	outb(0x21, 0x20); // Master PIC vector offset (IRQ0 target interrupt number)
+	outb(0xA1, 0x28); // Slave PIC vector offset (IRQ8 landing interrupt number)
+	outb(0x21, 0x04); // Tell Master PIC that Slave PIC is at IRQ2
+	outb(0xA1, 0x02); // Tell Slave PIC that it's cascaded to IRQ2
+	outb(0x21, 0x01); // Enable 8085 mode (whatever that means)
+	outb(0xA1, 0x01); // Enable 8085 mode (whatever that means)
+	outb(0x21, 0x0); // Clear masks
+	outb(0xA1, 0x0); // Clear masks
 
 	idt_set_entry( 0, (uint32)isr0 , 0x08, 0x8E);	// Division by zero exception
 	idt_set_entry( 1, (uint32)isr1 , 0x08, 0x8E);	// Debug exception
@@ -127,11 +127,9 @@ static void interrupt_init(){
 	idt_set((uint32)&idt_ptr);
 }
 
-static void idt_set_entry(uint8 num, uint32 base, uint16 sel, uint8 flags)
-{
+static void idt_set_entry(uint8 num, uint32 base, uint16 sel, uint8 flags){
 	idt[num].base_lo = base & 0xFFFF;
 	idt[num].base_hi = (base >> 16) & 0xFFFF;
-
 	idt[num].sel     = sel;
 	idt[num].always0 = 0;
 	// We must uncomment the OR below when we get to using user-mode.
