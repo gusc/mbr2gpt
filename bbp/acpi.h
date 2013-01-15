@@ -44,8 +44,8 @@ typedef struct {
 * Root System Descriptor table
 */
 typedef struct {
-	SDTHeader_t h;
-	uint32 ptr; // This actually is an array, but we're going to use it as an offset
+	SDTHeader_t h;					// Standard ACPI header
+	uint32 ptr;						// This actually is an array, but we're going to use it as an offset
 } RSDT_t;
 /**
 * Generic Address structure
@@ -61,7 +61,7 @@ typedef struct {
 * Fixed ACPI Description Table structure
 */
 typedef struct {
-	SDTHeader_t h;
+	SDTHeader_t h;					// Standard ACPI header
 	uint32 firmware_ctrl;
 	uint32 dsdt;
  
@@ -126,6 +126,58 @@ typedef struct {
 	GAS_t X_GPE0Block;
 	GAS_t X_GPE1Block;
 } FADT_t;
+/**
+* Multiple APIC Description Table structure
+*/
+typedef struct {
+	SDTHeader_t h;
+	uint32 lapic_add;			// Physical address of local APIC
+	uint32 flags;				// Flags
+	uint32 ptr;					// Local, IO and other APIC structures (we use it as an offset)
+} MADT_t;
+/**
+* ACPI APIC structure header
+*/
+typedef struct {
+	uint8 type;
+	uint8 length;
+} APICHeader_t;
+/**
+* Local APIC structure
+*/
+typedef struct {
+	APICHeader_t h;
+	uint8 processor_id;
+	uint8 apic_id;
+	uint32 flags;
+} LocalAPIC_t;
+/**
+* I/O APIC strcuture
+*/
+typedef struct {
+	APICHeader_t h;
+	uint8 apic_id;
+	uint8 reserved;
+	uint32 apic_addr;
+	uint32 gsi_base;
+} IOAPIC_t;
+/**
+* Non Maskable Interrupt (NMI) structure
+*/
+typedef struct {
+	APICHeader_t h;
+	uint16 flags;
+	uint32 gsi;
+} NMI_t;
+/**
+* Local APIC structure
+*/
+typedef struct {
+	APICHeader_t h;
+	uint8 processor_id;
+	uint16 flags;
+	uint8 lint;
+} LocalNMI_t;
 
 /**
 * Scan through memory and locate RSDP.

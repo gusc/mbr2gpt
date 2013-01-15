@@ -69,8 +69,16 @@ void kmain(){
 	RSDP_t *rsdp = acpi_find();
 	screen_print_int((uint32)rsdp, 0x07, sx, sy++);
 
-	char sign[4] = {'F', 'A', 'C', 'P'};
-	FADT_t *fadt = (FADT_t *)acpi_table(sign);
+	char sign[4] = {'A', 'P', 'I', 'C'};
+	MADT_t *madt = (MADT_t *)acpi_table(sign);
+	screen_print_int((uint32)madt, 0x07, sx, sy++);
+	if (madt != null){
+		screen_print_str("found MADT", 0x07, sx, sy++);
+	}
+
+	char signf[4] = {'F', 'A', 'C', 'P'};
+	FADT_t *fadt = (FADT_t *)acpi_table(signf);
+	screen_print_int((uint32)fadt, 0x07, sx, sy++);
 	if (fadt != null){
 		screen_print_str("found FADT", 0x07, sx, sy++);
 	}

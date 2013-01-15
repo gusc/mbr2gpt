@@ -45,16 +45,24 @@ SDTHeader_t *acpi_table(const char signature[4]){
 		RSDT_t *rsdt;
 		SDTHeader_t *th;
 		uint32 i;
+		uint32 c;
 		if (rsdp->revision == 0){
 			rsdt = (RSDT_t *)rsdp->RSDT_address;
-		} else {
-			rsdt = (RSDT_t *)rsdp->XSDT_address;
-		}
-		for (i = 0; i < (rsdt->h.length - sizeof(SDTHeader_t)) / 4; i ++){
-			th = (SDTHeader_t *)(rsdt->ptr + (i * 4));
-			if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
-				return th;
+			c = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
+			if ((rsdt->h.length - sizeof(SDTHeader_t)) % 4 > 0){
+				// Just in case the table is not aligned
+				c++;
 			}
+			for (i = 0; i < c; i ++){
+				th = (SDTHeader_t *)(rsdt->ptr + (i * 4));
+				if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
+					if (acpi_checksum((uint8 *)th, th->length) == 0){
+						return th;
+					}
+				}
+			}
+		} else {
+			//rsdt = (RSDT_t *)rsdp->XSDT_address;
 		}
 	}
 	return null;
