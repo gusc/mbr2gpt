@@ -1,3 +1,8 @@
+/**
+* @file acpi.h
+* ACPI functions
+* @see acpi.c
+*/
 #ifndef __acpi_h
 #define __acpi_h
 
@@ -124,13 +129,13 @@ typedef struct {
 
 /**
 * Scan through memory and locate RSDP.
-* @return RSDP_t * - pointer to RSDP structure in memory
+* @return pointer to RSDP structure in memory
 */
 RSDP_t *acpi_find();
 /**
 * Locate ACPI table - you must run acpi_find() first
-* @param const char *[in] - table signature (name)
-* @return SDTHeader_t * - pointer to table header (from here on you can locate all the other data)
+* @param [in] signature - table signature (table name)
+* @return pointer to table header (from here on you can locate all the other data)
 */
 SDTHeader_t *acpi_table(const char signature[4]);
 

@@ -1,3 +1,7 @@
+/**
+* @file kmain.h
+* C Entry point
+*/
 #ifndef __kmain_h
 #define __kmain_h
 

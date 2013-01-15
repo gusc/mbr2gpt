@@ -1,3 +1,8 @@
+/**
+* @file interrupts.h
+* Helper functions for operations interrupts
+* @see interrupts.asm - form implementation details
+*/
 #ifndef __interrupts_h
 #define __interrupts_h
 
@@ -21,14 +26,26 @@
 #define IRQ14 46
 #define IRQ15 47
 
+/**
+* Register stack passed from assembly
+*/
 typedef struct {
 	uint32 ds;										// Data segment selector
 	uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax;	// Pushed by pusha.
 	uint32 int_no, err_code;						// Interrupt number and error code (if applicable)
 	uint32 eip, cs, eflags, useresp, ss;			// Pushed by the processor automatically.
 } registers_t;
-
+/**
+* Interrupt Service Routine (ISR) handler
+* @param regs - registers pushed on the stack by assembly
+* @return void
+*/
 void isr_handler(registers_t regs);
+/**
+* Interrupt Request (IRQ) handler
+* @param regs - registers pushed on the stack by assembly
+* @return void
+*/
 void irq_handler(registers_t regs);
 
 // Defined in interrupts.asm (with macros!)

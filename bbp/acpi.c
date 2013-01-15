@@ -4,7 +4,13 @@
 static const char sign[9] = "RSD PTR ";
 static RSDP_t *rsdp = null;
 
-static uint8 acpi_checksum(char *block, uint32 len){
+/**
+* Calculate ACPI checksum
+* @param [in] block - memory address of a first byte of ACPI structure
+* @param len - structure size in memory
+* @return checksum value
+*/
+static uint8 acpi_checksum(uint8 *block, uint32 len){
 	uint32 sum = 0;
 	while (len--){
 		sum += *(block++);
@@ -18,11 +24,11 @@ RSDP_t *acpi_find(){
 		do {
 			if (mem_cmp((uint8 *)rsdp->signature, (uint8 *)sign, 8)){
 				if (rsdp->revision == 0){
-					if (acpi_checksum((char *)rsdp, sizeof(char) * 20) == 0){ // Revision 1.0 checksum
+					if (acpi_checksum((uint8 *)rsdp, sizeof(uint8) * 20) == 0){ // Revision 1.0 checksum
 						return rsdp;
 					}
 				} else {
-					if (acpi_checksum((char *)rsdp, sizeof(RSDP_t)) == 0){ // Revision 2.0+ checksum
+					if (acpi_checksum((uint8 *)rsdp, sizeof(RSDP_t)) == 0){ // Revision 2.0+ checksum
 						return rsdp;
 					}
 				}

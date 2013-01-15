@@ -11,7 +11,19 @@ idt_ptr_t   idt_ptr;
 static uint32 sx = 0;
 static uint32 sy = 0;
 
+/**
+* Initialize all the interrupts
+* @return void
+*/
 static void interrupt_init();
+/**
+* Set an entry in Interrupt Descriptor Table (IDT)
+* @param num - interrupt number
+* @param base - function pointer (function's address in memory)
+* @param sel - code selector from Global Descriptor Table (GDT)
+* @param flags - interrupt flags
+* @return void
+*/
 static void idt_set_entry(uint8 num, uint32 base, uint16 sel, uint8 flags);
 
 static char *ints[] = {
@@ -36,6 +48,10 @@ static char *ints[] = {
 	"Machine check exception"
 };
 
+/**
+* Main entry point of C code (called from boot.asm)
+* @return void
+*/
 void kmain(){
 	screen_clear(0x07);
 	screen_print_str("BBP is working fine!", 0x05, sx, sy++);

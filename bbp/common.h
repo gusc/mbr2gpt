@@ -72,6 +72,9 @@ typedef void *handle_t;
 #define false 0
 
 // Packed types
+/**
+* Packed word
+*/
 typedef union {
 	struct {
 		uint8 low;
@@ -79,6 +82,9 @@ typedef union {
 	} byte;
 	uint16 word;
 } pack16;
+/**
+* Packed dword
+*/
 typedef union {
 	struct {
 		uint16 low;
@@ -86,6 +92,9 @@ typedef union {
 	} word;
 	uint32 dword;
 } pack32;
+/**
+* Packed qword
+*/
 typedef union {
 	struct {
 		uint32 low;
@@ -93,8 +102,9 @@ typedef union {
 	} dword;
 	uint64 qword;
 } pack64;
-
-// Packed array
+/**
+* Packed qword as array subtypes
+*/
 typedef union {
 	uint8 byte[8];
 	uint16 word[4];

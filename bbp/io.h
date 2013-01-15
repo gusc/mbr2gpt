@@ -1,3 +1,7 @@
+/**
+* @file io.h
+* Helper functions for legacy IO operations
+*/
 #ifndef __io_h
 #define __io_h
 
@@ -5,8 +9,8 @@
 
 /**
 * Write a byte out to the specified port.
-* @param uint16 - IO port number
-* @param uint8 - byte value
+* @param port - IO port number
+* @param value - byte value
 * @return void
 */
 inline void outb(uint16 port, uint8 value){
@@ -14,8 +18,8 @@ inline void outb(uint16 port, uint8 value){
 }
 /**
 * Write a word out to the specified port.
-* @param uint16 - IO port number
-* @param uint16 - word value
+* @param port - IO port number
+* @param value - word value
 * @return void
 */
 inline void outw(uint16 port, uint16 value){
@@ -23,8 +27,8 @@ inline void outw(uint16 port, uint16 value){
 }
 /**
 * Read a byte from specified port.
-* @param uint16 - IO port number
-* @return uint8 - byte value
+* @param port - IO port number
+* @return byte value
 */
 inline uint8 inb(uint16 port){
 	uint8 ret;
@@ -33,8 +37,8 @@ inline uint8 inb(uint16 port){
 }
 /**
 * Read a word from specified port.
-* @param uint16 - IO port number
-* @return uint16 - word value
+* @param port - IO port number
+* @return word value
 */
 inline uint16 inw(uint16 port){
 	uint16 ret;
