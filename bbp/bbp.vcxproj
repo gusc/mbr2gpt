@@ -42,11 +42,13 @@ buildimg.bat</NMakeBuildCommandLine>
   <ItemGroup>
     <ClInclude Include="acpi.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="cpuid.h" />
     <ClInclude Include="descriptors.h" />
     <ClInclude Include="interrupts.h" />
     <ClInclude Include="io.h" />
     <ClInclude Include="kmain.h" />
     <ClInclude Include="memory.h" />
+    <ClInclude Include="msr.h" />
     <ClInclude Include="screen.h" />
     <ClInclude Include="string.h" />
   </ItemGroup>
