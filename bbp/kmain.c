@@ -82,6 +82,13 @@ void kmain(){
 	if (fadt != null){
 		screen_print_str("found FADT", 0x07, sx, sy++);
 	}
+
+	char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
+	SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
+	screen_print_int((uint32)ssdt, 0x07, sx, sy++);
+	if (ssdt != null){
+		screen_print_str("found SSDT", 0x07, sx, sy++);
+	}
 	
 	// Infinite loop
 	while(true){}

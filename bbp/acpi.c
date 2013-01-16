@@ -47,7 +47,6 @@ SDTHeader_t *acpi_table(const char signature[4]){
 		uint32 i;
 		uint32 count;
 		uint32 ptr;
-		char str[5] = "";
 		if (rsdp->revision == 0){
 			// ACPI version 1.0
 			rsdt = (RSDT_t *)rsdp->RSDT_address;
@@ -55,7 +54,7 @@ SDTHeader_t *acpi_table(const char signature[4]){
 			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
 			for (i = 0; i < count; i ++){
 				// Get an address of table pointer array
-				ptr = (uint32)(&rsdt->ptr);
+				ptr = (uint32)&rsdt->ptr;
 				// Move on to entry i (32bits = 4 bytes) in table pointer array
 				ptr += (i * 4);
 				// Get the pointer of table in table pointer array

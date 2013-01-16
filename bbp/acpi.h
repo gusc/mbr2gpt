@@ -48,6 +48,13 @@ typedef struct {
 	uint32 ptr;						// This actually is an array, but we're going to use it as an offset
 } RSDT_t;
 /**
+* Secondary System Descriptor table
+*/
+typedef struct {
+	SDTHeader_t h;					// Standard ACPI header
+	uint8 *ptr;						// This actually is an array, but we're going to use it as an offset
+} SSDT_t;
+/**
 * Generic Address structure
 */
 typedef struct {
