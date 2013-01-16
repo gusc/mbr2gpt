@@ -45,16 +45,21 @@ SDTHeader_t *acpi_table(const char signature[4]){
 		RSDT_t *rsdt;
 		SDTHeader_t *th;
 		uint32 i;
-		uint32 c;
+		uint32 count;
+		uint32 ptr;
+		char str[5] = "";
 		if (rsdp->revision == 0){
+			// ACPI version 1.0
 			rsdt = (RSDT_t *)rsdp->RSDT_address;
-			c = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
-			if ((rsdt->h.length - sizeof(SDTHeader_t)) % 4 > 0){
-				// Just in case the table is not aligned
-				c++;
-			}
-			for (i = 0; i < c; i ++){
-				th = (SDTHeader_t *)(rsdt->ptr + (i * 4));
+			// Get count of other table pointers
+			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint32)(&rsdt->ptr);
+				// Move on to entry i (32bits = 4 bytes) in table pointer array
+				ptr += (i * 4);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)(*((uint32 *)ptr));
 				if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
 					if (acpi_checksum((uint8 *)th, th->length) == 0){
 						return th;
