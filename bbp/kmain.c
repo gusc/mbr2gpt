@@ -81,6 +81,12 @@ void kmain(){
 	screen_print_int((uint32)fadt, 0x07, sx, sy++);
 	if (fadt != null){
 		screen_print_str("found FADT", 0x07, sx, sy++);
+		DSDT_t *dsdt = fadt->dsdt;
+		screen_print_int((uint32)dsdt, 0x07, sx, sy++);
+		screen_print_str("found DSDT", 0x07, sx, sy++);
+		FACS_t *facs = fadt->firmware_ctrl;
+		screen_print_int((uint32)facs, 0x07, sx, sy++);
+		screen_print_str("found FACS", 0x07, sx, sy++);
 	}
 
 	char ssdt_sig[4] = {'S', 'S', 'D', 'T'};

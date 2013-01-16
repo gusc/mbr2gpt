@@ -45,15 +45,39 @@ typedef struct {
 */
 typedef struct {
 	SDTHeader_t h;					// Standard ACPI header
-	uint32 ptr;						// This actually is an array, but we're going to use it as an offset
+	uint32 ptr;						// This actually is an array, we're using only first entry
 } RSDT_t;
 /**
 * Secondary System Descriptor table
 */
 typedef struct {
 	SDTHeader_t h;					// Standard ACPI header
-	uint8 *ptr;						// This actually is an array, but we're going to use it as an offset
+	uint8 ptr;						// AML bytecode
 } SSDT_t;
+/**
+* Differentiated System Descriptor table
+*/
+typedef struct {
+	SDTHeader_t h;					// Standard ACPI header
+	uint8 ptr;						// AML bytecode
+} DSDT_t;
+/**
+* Firmware ACPI Control Structure
+*/
+typedef struct {
+	char signature[4];
+	uint32 length;
+	uint32 hw_signature;
+	uint32 fw_vector;
+	uint32 global_lock;
+	uint32 flags;
+
+	uint64 x_fw_vector;
+	uint8 version;
+	uint8 reserved[3];
+	uint32 ospm_flags;
+	uint8 reserved2[24];
+} FACS_t;
 /**
 * Generic Address structure
 */
@@ -69,8 +93,8 @@ typedef struct {
 */
 typedef struct {
 	SDTHeader_t h;					// Standard ACPI header
-	uint32 firmware_ctrl;
-	uint32 dsdt;
+	FACS_t *firmware_ctrl;			// Pointer to FACS table
+	DSDT_t *dsdt;					// Pointer to DSDT table
  
 	// field used in ACPI 1.0; no longer in use, for compatibility only
 	uint8 reserved;
@@ -82,24 +106,24 @@ typedef struct {
 	uint8  acpi_disable;
 	uint8  s4_bios_req;
 	uint8  pstate_control;
-	uint32 PM1aEventBlock;
-	uint32 PM1bEventBlock;
-	uint32 PM1aControlBlock;
-	uint32 PM1bControlBlock;
-	uint32 PM2ControlBlock;
-	uint32 PMTimerBlock;
-	uint32 GPE0Block;
-	uint32 GPE1Block;
-	uint8  PM1EventLength;
-	uint8  PM1ControlLength;
-	uint8  PM2ControlLength;
-	uint8  PMTimerLength;
-	uint8  GPE0Length;
-	uint8  GPE1Length;
-	uint8  GPE1Base;
+	uint32 pm1a_event_block;
+	uint32 pm1b_event_block;
+	uint32 pm1a_control_block;
+	uint32 pm1b_control_block;
+	uint32 pm2_control_block;
+	uint32 pm_timer_block;
+	uint32 gpe0_block;
+	uint32 gpe1_block;
+	uint8  pm1_event_length;
+	uint8  pm1_control_length;
+	uint8  pm2_control_length;
+	uint8  pm_timer_length;
+	uint8  gpe0_length;
+	uint8  gpe1_length;
+	uint8  gpe1_base;
 	uint8  cstate_control;
-	uint16 worst_C2_latency;
-	uint16 worst_C3_latency;
+	uint16 worst_c2_latency;
+	uint16 worst_c3_latency;
 	uint16 flush_size;
 	uint16 flush_stride;
 	uint8  duty_offset;
@@ -121,17 +145,17 @@ typedef struct {
 	uint8 reserved3[3];
  
 	// 64bit pointers - Available on ACPI 2.0+
-	uint64 X_FirmwareControl;
-	uint64 X_Dsdt;
+	uint64 x_firmware_control;
+	uint64 x_dsdt;
  
-	GAS_t X_PM1aEventBlock;
-	GAS_t X_PM1bEventBlock;
-	GAS_t X_PM1aControlBlock;
-	GAS_t X_PM1bControlBlock;
-	GAS_t X_PM2ControlBlock;
-	GAS_t X_PMTimerBlock;
-	GAS_t X_GPE0Block;
-	GAS_t X_GPE1Block;
+	GAS_t x_pm1a_event_block;
+	GAS_t x_pm1b_event_block;
+	GAS_t x_pm1a_control_block;
+	GAS_t x_pm1b_control_block;
+	GAS_t x_pm2_control_block;
+	GAS_t x_pm_timer_block;
+	GAS_t x_gpe0_block;
+	GAS_t x_gpe1_block;
 } FADT_t;
 /**
 * Multiple APIC Description Table structure
