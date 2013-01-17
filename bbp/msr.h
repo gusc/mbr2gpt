@@ -7,6 +7,16 @@
 
 #include "common.h"
 
+// MSR macros
+#define MSR_IA32_P5_MC_ADDR 0x0
+#define MSR_IA32_P5_MC_TYPE 0x1
+#define MSR_IA32_APIC_BASE 0x1B
+#define MSR_IA32_FEATURE_CONTROL 0x3A
+#define MSR_BBL_CR_CTL3 0x11E
+#define MSR_IA32_MISC_ENABLE 0x1A0
+#define MSR_IA32_EFER 0xC0000080
+#define MSR_IA32_STAR 0xC0000081
+
 /**
 * Read MSR value
 * @param msr - Model Specific Register
