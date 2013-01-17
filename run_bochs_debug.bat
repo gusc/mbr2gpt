@@ -1,2 +1,2 @@
 ECHO Starting bochs...
-bochsdbg-p4-smp.exe -q -f "%CD%\bochsrc_debug.bxrc"
+bochsdbg-i7ivy-smp.exe -q -f "%CD%\bochsrc_debug.bxrc"

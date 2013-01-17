@@ -1,2 +1,2 @@
 ECHO Starting bochs...
-bochs.exe -q -f "%CD%\bochsrc.bxrc"
+bochs-i7ivy-smp.exe -q -f "%CD%\bochsrc.bxrc"
