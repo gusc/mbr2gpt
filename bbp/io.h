@@ -13,7 +13,7 @@
 * @param value - byte value
 * @return void
 */
-inline void outb(uint16 port, uint8 value){
+void __INLINE outb(uint16 port, uint8 value){
 	asm volatile ("outb %1, %0" : : "dN"(port), "a"(value));
 }
 /**
@@ -22,7 +22,7 @@ inline void outb(uint16 port, uint8 value){
 * @param value - word value
 * @return void
 */
-inline void outw(uint16 port, uint16 value){
+void __INLINE outw(uint16 port, uint16 value){
 	asm volatile ("outw %1, %0" : : "dN"(port), "a"(value));
 }
 /**
@@ -30,7 +30,7 @@ inline void outw(uint16 port, uint16 value){
 * @param port - IO port number
 * @return byte value
 */
-inline uint8 inb(uint16 port){
+uint8 __INLINE inb(uint16 port){
 	uint8 ret;
 	asm volatile("inb %1, %0" : "=a"(ret) : "dN"(port));
 	return ret;
@@ -40,7 +40,7 @@ inline uint8 inb(uint16 port){
 * @param port - IO port number
 * @return word value
 */
-inline uint16 inw(uint16 port){
+uint16 __INLINE inw(uint16 port){
 	uint16 ret;
 	asm volatile("inw %1, %0" : "=a"(ret) : "dN"(port));
 	return ret;

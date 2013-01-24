@@ -45,6 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __common_h
 #define __common_h
 
+#define __INLINE __attribute__((always_inline))
+
 // Default types
 typedef unsigned char	uchar;
 

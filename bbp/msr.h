@@ -24,7 +24,7 @@
 * @param [out] hi - high dword
 * @return void
 */
-inline void msr_read(uint32 msr, uint32 *lo, uint32 *hi){
+void __INLINE msr_read(uint32 msr, uint32 *lo, uint32 *hi){
    asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
 }
 /**
@@ -34,7 +34,7 @@ inline void msr_read(uint32 msr, uint32 *lo, uint32 *hi){
 * @param [in] hi - high dword
 * @return void
 */
-inline void msr_write(uint32 msr, uint32 lo, uint32 hi){
+void __INLINE msr_write(uint32 msr, uint32 lo, uint32 hi){
    asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
