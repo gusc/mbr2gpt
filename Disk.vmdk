@@ -1,0 +1,24 @@
+# Disk DescriptorFile
+version=1
+CID=bc86b9fe
+parentCID=ffffffff
+createType="monolithicFlat"
+
+# Extent description
+RW 10080 FLAT "Release/disk.img" 0
+
+# The disk Data Base 
+#DDB
+
+ddb.virtualHWVersion = "4"
+ddb.adapterType="ide"
+ddb.uuid.image="6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa"
+ddb.uuid.parent="00000000-0000-0000-0000-000000000000"
+ddb.uuid.modification="00000000-0000-0000-0000-000000000000"
+ddb.uuid.parentmodification="00000000-0000-0000-0000-000000000000"
+ddb.geometry.cylinders="10"
+ddb.geometry.heads="16"
+ddb.geometry.sectors="63"
+ddb.geometry.biosCylinders="10"
+ddb.geometry.biosHeads="16"
+ddb.geometry.biosSectors="63"
