@@ -69,6 +69,26 @@ void kmain(){
 	RSDP_t *rsdp = acpi_find();
 	screen_print_int((uint32)rsdp, 0x07, sx, sy++);
 
+  if (rsdp->revision == 0){
+		RSDT_t *rsdt = (RSDT_t *)rsdp->RSDT_address;
+		SDTHeader_t *th;
+		char str[5] = "";
+		uint32 i;
+		uint32 ptr;
+		uint32 count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
+		for (i = 0; i < count; i ++){
+			// Get an address of table pointer array
+			ptr = (uint32)&rsdt->ptr;
+			// Move on to entry i (32bits = 4 bytes) in table pointer array
+			ptr += (i * 4);
+			// Get the pointer of table in table pointer array
+			th = (SDTHeader_t *)(*((uint32 *)ptr));
+			mem_set(0, (uint8 *)str, 5);
+			mem_copy((uint8 *)th->signature, (uint8 *)str, 4);
+			screen_print_str(str, 0x07, 0, sy++);
+		}		
+	}
+
 	char apic[4] = {'A', 'P', 'I', 'C'};
 	MADT_t *madt = (MADT_t *)acpi_table(apic);
 	screen_print_int((uint32)madt, 0x07, sx, sy++);
