@@ -10,7 +10,6 @@ File list
 * main.inc - data structure definitions and memory location definitions
 * mbr.vcxproj - Visual Studio 2010 project file
 
-
 Requirements
 ------------
 

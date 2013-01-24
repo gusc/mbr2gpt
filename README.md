@@ -11,7 +11,18 @@ Master Boot Record code
 bbp
 ---
 
-Test BIOS Boot Partition code
+Test BIOS Boot Partition code (my playground to write an OS)
+
+Other files
+-----------
+
+* MBR2GPT.vbox - VirtualBox test machine
+* run_bochs.bat - launch Bochs test machine
+* run_bochs_debug.bat - launch Bochs test machine with GUI debugger
+* run_qemu.bat - launch QEMU test machine
+* bochsrc.bxrc - Bochs configuration file
+* bochsrc_debug.bxrc - Bochs configuration file (with GUI debugger)
+* Disk.vmdk - VMDK disk image header for VirtualBox test machine
 
 Requirements
 ------------
