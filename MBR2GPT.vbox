@@ -6,7 +6,7 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.innotek.de/VirtualBox-settings" version="1.12-windows">
-  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-01-24T15:17:44Z">
+  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-01-24T15:29:27Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa}" location="Disk.vmdk" format="VMDK" type="Normal"/>
@@ -20,22 +20,22 @@
       <ExtraDataItem name="GUI/LastNormalWindowPosition" value="699,340,720,439"/>
     </ExtraData>
     <Hardware version="2">
-      <CPU count="1" hotplug="false">
+      <CPU count="2" hotplug="false">
         <HardwareVirtEx enabled="true" exclusive="false"/>
         <HardwareVirtExNestedPaging enabled="true"/>
         <HardwareVirtExVPID enabled="true"/>
-        <PAE enabled="false"/>
+        <PAE enabled="true"/>
         <HardwareVirtExLargePages enabled="false"/>
         <HardwareVirtForce enabled="false"/>
       </CPU>
-      <Memory RAMSize="64" PageFusion="false"/>
+      <Memory RAMSize="256" PageFusion="false"/>
       <HID Pointing="PS2Mouse" Keyboard="PS2Keyboard"/>
       <HPET enabled="false"/>
       <Chipset type="PIIX3"/>
       <Boot>
-        <Order position="1" device="Floppy"/>
-        <Order position="2" device="DVD"/>
-        <Order position="3" device="HardDisk"/>
+        <Order position="1" device="HardDisk"/>
+        <Order position="2" device="None"/>
+        <Order position="3" device="None"/>
         <Order position="4" device="None"/>
       </Boot>
       <Display VRAMSize="10" monitorCount="1" accelerate3D="false" accelerate2DVideo="false"/>
@@ -43,7 +43,7 @@
       <RemoteDisplay enabled="false" authType="Null" authTimeout="5000"/>
       <BIOS>
         <ACPI enabled="true"/>
-        <IOAPIC enabled="false"/>
+        <IOAPIC enabled="true"/>
         <Logo fadeIn="true" fadeOut="true" displayTime="0"/>
         <BootMenu mode="MessageAndMenu"/>
         <TimeOffset value="0"/>
