@@ -66,54 +66,77 @@ void kmain(){
 
 	//asm volatile("int $0x3"); // Invoke "breakpoint"
 	
+	// Test ACPI
+
 	RSDP_t *rsdp = acpi_find();
 	screen_print_int((uint32)rsdp, 0x07, sx, sy++);
-
-  if (rsdp->revision == 0){
-		RSDT_t *rsdt = (RSDT_t *)rsdp->RSDT_address;
+	
+	if (rsdp != null){
 		SDTHeader_t *th;
 		char str[5] = "";
 		uint32 i;
-		uint32 ptr;
-		uint32 count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
-		for (i = 0; i < count; i ++){
-			// Get an address of table pointer array
-			ptr = (uint32)&rsdt->ptr;
-			// Move on to entry i (32bits = 4 bytes) in table pointer array
-			ptr += (i * 4);
-			// Get the pointer of table in table pointer array
-			th = (SDTHeader_t *)(*((uint32 *)ptr));
-			mem_set(0, (uint8 *)str, 5);
-			mem_copy((uint8 *)th->signature, (uint8 *)str, 4);
-			screen_print_str(str, 0x07, 0, sy++);
-		}		
-	}
+		uint32 count;
+		
+		if (rsdp->revision == 0){
+			// ACPI revision 1.0
+			RSDT_t *rsdt = (RSDT_t *)rsdp->RSDT_address;
+			uint32 ptr;
+			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint32)&rsdt->ptr;
+				// Move on to entry i (32bits = 4 bytes) in table pointer array
+				ptr += (i * 4);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)(*((uint32 *)ptr));
+				mem_set(0, (uint8 *)str, 5);
+				mem_copy((uint8 *)th->signature, (uint8 *)str, 4);
+				screen_print_str(str, 0x07, 0, sy++);
+			}
+		} else {
+			// ACPI revision 2.0+
+			XSDT_t *xsdt = (XSDT_t *)rsdp->XSDT_address;
+			uint64 ptr;
+			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 8;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint64)&xsdt->ptr;
+				// Move on to entry i (64bits = 8 bytes) in table pointer array
+				ptr += (i * 8);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)(*((uint64 *)ptr));
+				mem_set(0, (uint8 *)str, 5);
+				mem_copy((uint8 *)th->signature, (uint8 *)str, 4);
+				screen_print_str(str, 0x07, 0, sy++);
+			}
+		}
 
-	char apic[4] = {'A', 'P', 'I', 'C'};
-	MADT_t *madt = (MADT_t *)acpi_table(apic);
-	screen_print_int((uint32)madt, 0x07, sx, sy++);
-	if (madt != null){
-		screen_print_str("found MADT", 0x07, sx, sy++);
-	}
+		char apic[4] = {'A', 'P', 'I', 'C'};
+		MADT_t *madt = (MADT_t *)acpi_table(apic);
+		screen_print_int((uint32)madt, 0x07, sx, sy++);
+		if (madt != null){
+			screen_print_str("found MADT", 0x07, sx, sy++);
+		}
 
-	char facp[4] = {'F', 'A', 'C', 'P'};
-	FADT_t *fadt = (FADT_t *)acpi_table(facp);
-	screen_print_int((uint32)fadt, 0x07, sx, sy++);
-	if (fadt != null){
-		screen_print_str("found FADT", 0x07, sx, sy++);
-		DSDT_t *dsdt = fadt->dsdt;
-		screen_print_int((uint32)dsdt, 0x07, sx, sy++);
-		screen_print_str("found DSDT", 0x07, sx, sy++);
-		FACS_t *facs = fadt->firmware_ctrl;
-		screen_print_int((uint32)facs, 0x07, sx, sy++);
-		screen_print_str("found FACS", 0x07, sx, sy++);
-	}
+		char facp[4] = {'F', 'A', 'C', 'P'};
+		FADT_t *fadt = (FADT_t *)acpi_table(facp);
+		screen_print_int((uint32)fadt, 0x07, sx, sy++);
+		if (fadt != null){
+			screen_print_str("found FADT", 0x07, sx, sy++);
+			DSDT_t *dsdt = fadt->dsdt;
+			screen_print_int((uint32)dsdt, 0x07, sx, sy++);
+			screen_print_str("found DSDT", 0x07, sx, sy++);
+			FACS_t *facs = fadt->firmware_ctrl;
+			screen_print_int((uint32)facs, 0x07, sx, sy++);
+			screen_print_str("found FACS", 0x07, sx, sy++);
+		}
 
-	char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
-	SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
-	screen_print_int((uint32)ssdt, 0x07, sx, sy++);
-	if (ssdt != null){
-		screen_print_str("found SSDT", 0x07, sx, sy++);
+		char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
+		SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
+		screen_print_int((uint32)ssdt, 0x07, sx, sy++);
+		if (ssdt != null){
+			screen_print_str("found SSDT", 0x07, sx, sy++);
+		}
 	}
 	
 	// Infinite loop

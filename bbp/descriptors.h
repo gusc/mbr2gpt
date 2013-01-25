@@ -18,7 +18,7 @@ struct gdt_entry_struct {
 	uint8  access;				// Access flags, determine what ring this segment can be used in.
 	uint8  granularity;
 	uint8  base_high;			// The last 8 bits of the base.
-} __attribute__((packed));
+} __PACKED;
 /**
 * Global Descriptor Table (GDT) entry
 */
@@ -30,7 +30,7 @@ typedef struct gdt_entry_struct gdt_entry_t;
 struct gdt_ptr_struct {
 	uint16 limit;				// The upper 16 bits of all selector limits.
 	uint32 base;				// The address of the first gdt_entry_t struct.
-} __attribute__((packed));
+} __PACKED;
 /**
 * Global Descriptor Table (GDT) pointer
 */
@@ -45,7 +45,7 @@ struct idt_entry_struct {
 	uint8  always0;				// This must always be zero.
 	uint8  flags;				// More flags. See documentation.
 	uint16 base_hi;				// The upper 16 bits of the address to jump to.
-} __attribute__((packed));
+} __PACKED;
 /**
 * Interrupt Descriptor Table (IDT) entry
 */
@@ -57,7 +57,7 @@ typedef struct idt_entry_struct idt_entry_t;
 struct idt_ptr_struct {
 	uint16 limit;
 	uint32 base;				// The address of the first element in our idt_entry_t array.
-} __attribute__((packed));
+} __PACKED;
 /**
 * Interrupt Descriptor Table (IDT) pointer
 */

@@ -20,7 +20,7 @@ static uint8 acpi_checksum(uint8 *block, uint32 len){
 
 RSDP_t *acpi_find(){
 	if (rsdp == null){
-		rsdp = (RSDP_t *)0x87c00; // We start at the end of our BBP code
+		rsdp = (RSDP_t *)0x0; // We start at the end of our BBP code
 		do {
 			if (mem_cmp((uint8 *)rsdp->signature, (uint8 *)sign, 8)){
 				if (rsdp->revision == 0){
@@ -42,14 +42,13 @@ RSDP_t *acpi_find(){
 
 SDTHeader_t *acpi_table(const char signature[4]){
 	if (rsdp != null){
-		RSDT_t *rsdt;
 		SDTHeader_t *th;
 		uint32 i;
 		uint32 count;
-		uint32 ptr;
 		if (rsdp->revision == 0){
 			// ACPI version 1.0
-			rsdt = (RSDT_t *)rsdp->RSDT_address;
+			RSDT_t *rsdt = (RSDT_t *)rsdp->RSDT_address;
+			uint32 ptr;
 			// Get count of other table pointers
 			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
 			for (i = 0; i < count; i ++){
@@ -66,7 +65,24 @@ SDTHeader_t *acpi_table(const char signature[4]){
 				}
 			}
 		} else {
-			//rsdt = (RSDT_t *)rsdp->XSDT_address;
+			// ACPI version 2.0+
+			XSDT_t *xsdt = (XSDT_t *)rsdp->XSDT_address;
+			uint64 ptr;
+			// Get count of other table pointers
+			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 4;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint64)&xsdt->ptr;
+				// Move on to entry i (64bits = 8 bytes) in table pointer array
+				ptr += (i * 8);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)(*((uint64 *)ptr));
+				if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
+					if (acpi_checksum((uint8 *)th, th->length) == 0){
+						return th;
+					}
+				}
+			}
 		}
 	}
 	return null;
