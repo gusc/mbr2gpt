@@ -1,6 +1,6 @@
 AS = nasm -felf
-CC = i786-elf-gcc -march=i686 -nostdlib -fno-builtin -nostartfiles -nodefaultlibs
-LD = i786-elf-ld
+CC = x86_64-pc-elf-gcc -m32 -march=i686 -nostdlib -fno-builtin -nostartfiles -nodefaultlibs
+LD = x86_64-pc-elf-ld -melf_i386
 OBJECTS = boot.s.o kmain.c.o descriptors.s.o interrupts.s.o screen.c.o memory.c.o string.c.o acpi.c.o
 
 all: bbp.img
