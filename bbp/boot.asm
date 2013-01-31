@@ -51,6 +51,7 @@ gdt_ptr:
 
 [global start]									; Make start global
 [extern kmain]									; C kmain() function
+[extern kmain64]								; C kmain64() function
 
 ; Remember in NASM it's:
 ; instruction destination, source
@@ -104,3 +105,33 @@ exec_main:										; Transfer controll to C
 	call kmain									; call C function kmain() (see: kmain.c)
 	cli											; disable interrupts
 	
+;disable_paging:									; Disable paging
+;	mov eax, cr0								; read from Control Register CR0
+;	xor eax, 80000000							; clear Paging bit
+;	mov cr0, eax								; write to Control Register CR
+	
+;enable_pae:										; Enable PAE
+;	mov eax, cr4								; read from Control Registar CR4
+;	or eax, 0x0010								; set PAE enabled bit
+
+;ia32e_mode:										; Enter Long Mode
+;	mov ecx, 0xC0000080							; set to work with EFER MSR
+;	rdmsr 										; read EFER MSR
+;	or edx, 0x80								; set Long mode enabled (LME) bit
+;	wrmsr										; write EFER MSR
+
+;enable_paging:
+;	mov eax, cr0								; read from Control Register CR0
+;	or eax, 80000000							; clear Paging bit
+;	mov cr0, eax								; write to Control Register CR
+
+;reload_gdt:										; Re-Load Global Descriptor Table
+;	lgdt [gdt_ptr]								; gdt_ptr is an address to memory so we enclose it in []
+
+;[bits 64]
+
+;exec_main64:									; Transfer controll to C
+;	sti											; enable interrupts
+;	call kmain64								; call C function kmain64() (see: kmain64.c)
+;	cli											; disable interrupts
+;	jmp $										; hang

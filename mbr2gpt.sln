@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual C++ Express 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bbp", "bbp\bbp.vcxproj", "{3D779CE6-A610-49F7-AC07-992AEEB4115D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{FC061F2D-BC1C-4918-8FCD-CD6F0CBDBE36} = {FC061F2D-BC1C-4918-8FCD-CD6F0CBDBE36}
