@@ -1,7 +1,7 @@
-#include "kmain64.h"
+#include "main64.h"
 #include "common.h"
 
-void kmain64(){
+void main64(){
 
 
 	// Infinite loop

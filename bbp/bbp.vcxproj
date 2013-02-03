@@ -6,6 +6,38 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="boot16.asm" />
+    <None Include="boot32\descriptors.asm" />
+    <None Include="boot32\gdt.asm" />
+    <None Include="boot32\idt.asm" />
+    <None Include="boot32\interrupts.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="boot32\acpi.c" />
+    <ClCompile Include="boot32\main32.c" />
+    <ClCompile Include="boot32\memory.c" />
+    <ClCompile Include="boot32\screen.c" />
+    <ClCompile Include="boot32\string.c" />
+    <ClCompile Include="boot64\main64.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="boot32\acpi.h" />
+    <ClInclude Include="boot32\common.h" />
+    <ClInclude Include="boot32\cpuid.h" />
+    <ClInclude Include="boot32\descriptors.h" />
+    <ClInclude Include="boot32\gdt.h" />
+    <ClInclude Include="boot32\idt.h" />
+    <ClInclude Include="boot32\interrupts.h" />
+    <ClInclude Include="boot32\io.h" />
+    <ClInclude Include="boot32\main32.h" />
+    <ClInclude Include="boot32\memory.h" />
+    <ClInclude Include="boot32\msr.h" />
+    <ClInclude Include="boot32\screen.h" />
+    <ClInclude Include="boot32\string.h" />
+    <ClInclude Include="boot64\common.h" />
+    <ClInclude Include="boot64\main64.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3D779CE6-A610-49F7-AC07-992AEEB4115D}</ProjectGuid>
     <RootNamespace>kernel</RootNamespace>
@@ -21,11 +53,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ExecutablePath>C:\MinGW\bin;C:\MinGW\msys\1.0\bin;C:\cross-gcc\x86_64-elf\bin;C:\cross-gcc\x86_64-elf\x86_64-elf\bin;C:\Program Files\Netwide Assembler;$(SystemRoot)\system32</ExecutablePath>
+    <ExecutablePath>C:\MinGW\bin;C:\MinGW\msys\1.0\bin;C:\Program Files\Netwide Assembler;C:\cross-gcc\i786-elf\bin;C:\cross-gcc\x86_64-elf\bin</ExecutablePath>
     <NMakeBuildCommandLine>make -C "$(ProjectDir)"
 buildimg.bat</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>del *.o "..\Release\bbp.img" "..\Release\disk.img"</NMakeCleanCommandLine>
+    <NMakeCleanCommandLine>del *.o "boot32\*.o" "boot64\*.o" "..\Release\bbp.img" "..\Release\disk.img"</NMakeCleanCommandLine>
     <IncludePath />
     <ReferencePath />
     <LibraryPath />
@@ -33,32 +65,5 @@ buildimg.bat</NMakeBuildCommandLine>
     <ExcludePath />
     <NMakeOutput>bbp.img</NMakeOutput>
   </PropertyGroup>
-  <ItemGroup>
-    <None Include="boot.asm" />
-    <None Include="descriptors.asm" />
-    <None Include="interrupts.asm" />
-    <None Include="kmain.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="acpi.h" />
-    <ClInclude Include="common.h" />
-    <ClInclude Include="cpuid.h" />
-    <ClInclude Include="descriptors.h" />
-    <ClInclude Include="interrupts.h" />
-    <ClInclude Include="io.h" />
-    <ClInclude Include="kmain.h" />
-    <ClInclude Include="kmain64.h" />
-    <ClInclude Include="memory.h" />
-    <ClInclude Include="msr.h" />
-    <ClInclude Include="screen.h" />
-    <ClInclude Include="string.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="acpi.c" />
-    <ClCompile Include="kmain64.c" />
-    <ClCompile Include="memory.c" />
-    <ClCompile Include="screen.c" />
-    <ClCompile Include="string.c" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

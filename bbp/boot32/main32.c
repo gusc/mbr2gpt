@@ -1,4 +1,7 @@
-#include "kmain.h"
+#include "common.h"
+#include "gdt.h"
+#include "idt.h"
+#include "interrupts.h"
 #include "screen.h"
 #include "memory.h"
 #include "string.h"
@@ -52,12 +55,10 @@ static char *ints[] = {
 * Main entry point of C code (called from boot.asm)
 * @return void
 */
-void kmain(){
+void main32(){
 	screen_clear(0x07);
 	screen_print_str("BBP is working fine!", 0x05, sx, sy++);
-
 	interrupt_init();
-
 	// Test interrupts
 
 	//uint32 a = 12;
@@ -68,6 +69,7 @@ void kmain(){
 	
 	// Test ACPI
 
+	/*
 	RSDP_t *rsdp = acpi_find();
 	screen_print_int((uint32)rsdp, 0x07, sx, sy++);
 	
@@ -95,16 +97,16 @@ void kmain(){
 			}
 		} else {
 			// ACPI revision 2.0+
-			XSDT_t *xsdt = (XSDT_t *)rsdp->XSDT_address;
-			uint64 ptr;
+			XSDT_t *xsdt = (XSDT_t *)((uint32)rsdp->XSDT_address);
+			uint32 ptr;
 			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 8;
 			for (i = 0; i < count; i ++){
 				// Get an address of table pointer array
-				ptr = (uint64)&xsdt->ptr;
+				ptr = (uint32)&xsdt->ptr;
 				// Move on to entry i (64bits = 8 bytes) in table pointer array
 				ptr += (i * 8);
 				// Get the pointer of table in table pointer array
-				th = (SDTHeader_t *)(*((uint64 *)ptr));
+				th = (SDTHeader_t *)(*((uint32 *)ptr));
 				mem_set(0, (uint8 *)str, 5);
 				mem_copy((uint8 *)th->signature, (uint8 *)str, 4);
 				screen_print_str(str, 0x07, 0, sy++);
@@ -138,16 +140,17 @@ void kmain(){
 			screen_print_str("found SSDT", 0x07, sx, sy++);
 		}
 	}
+	*/
 	
 	// Infinite loop
 	while(true){}
 }
 
 static void interrupt_init(){
-	idt_ptr.limit = sizeof(idt_entry_t) * 256 -1;
+	idt_ptr.limit = (sizeof(idt_entry_t) * 256) - 1;
 	idt_ptr.base  = (uint32)&idt;
 
-	mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t)*256);
+	mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t) * 256);
 
 	// Remap the IRQ table.
 	outb(0x20, 0x11); // Initialize master PIC

@@ -66,17 +66,17 @@ SDTHeader_t *acpi_table(const char signature[4]){
 			}
 		} else {
 			// ACPI version 2.0+
-			XSDT_t *xsdt = (XSDT_t *)rsdp->XSDT_address;
-			uint64 ptr;
+			XSDT_t *xsdt = (XSDT_t *)((uint32)rsdp->XSDT_address);
+			uint32 ptr;
 			// Get count of other table pointers
 			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 4;
 			for (i = 0; i < count; i ++){
 				// Get an address of table pointer array
-				ptr = (uint64)&xsdt->ptr;
+				ptr = (uint32)&xsdt->ptr;
 				// Move on to entry i (64bits = 8 bytes) in table pointer array
 				ptr += (i * 8);
 				// Get the pointer of table in table pointer array
-				th = (SDTHeader_t *)(*((uint64 *)ptr));
+				th = (SDTHeader_t *)(*((uint32 *)ptr));
 				if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
 					if (acpi_checksum((uint8 *)th, th->length) == 0){
 						return th;
