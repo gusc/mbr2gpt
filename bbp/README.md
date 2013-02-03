@@ -7,24 +7,9 @@ File list
 ---------
 
 Main entry files:
-* boot.asm - main BBP entry code
-* kmain.c - C entry point that get's called by boot.asm
-* kmain.h - main header file
-
-Helper files:
-* acpi.c - ACPI table lokup implementation
-* acpi.h - ACPI table structures
-* common.h - data type definitions
-* cpuid.h - inline assembly definition for CPUID instruction
-* descriptors.asm - GDT and IDT setup routines
-* descriptors.h - GDT and IDT C data structures
-* io.h - legaci IO instruction inline definitions
-* interrupts.asm - interrupt service routines
-* interrupts.h - intterupt service routine import in C
-* screen.* - screen writing functions
-* memory.* - memory functions
-* msr.h - Model Specific Register (MSR) instructions inline definitions
-* string.* - string functions
+* boot16.asm - main BBP entry code (real mode code)
+* boot32/ - protected mode code
+* boot64/ - long mode code
 
 Build files:
 * bbp.ld - BBP linker script
