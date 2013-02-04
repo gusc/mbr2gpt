@@ -12,6 +12,7 @@
 ; 9. execute C main64() method which should start up full long mode environment
 
 %define ORG_LOC 0x7C00							; Initial position in memory (where MBR loads us)
+%define	E820_LOC		0x0800					; Location of E820 Memory Map
 
 [section .data]
 
@@ -23,7 +24,8 @@
 
 ; Global Descriptor Table (GDT) used to do a Protected Mode jump
 gdt:
-	; Null Descriptor (selector: 0x00)
+; Null Descriptor (selector: 0x00)
+.null_desc:
 	dw 0x0000
 	dw 0x0000
 	db 0x00
@@ -31,7 +33,8 @@ gdt:
 	db 0x00
 	db 0x00
 
-	; Code Descriptor (selector: 0x08)
+; Code Descriptor (selector: 0x08)
+.code_desc:
 	dw 0xffff									; Limit
 	dw 0x0000									; Base (low word)
 	db 0x00										; Base (high word low byte)
@@ -39,7 +42,8 @@ gdt:
 	db 0xcf										; Limit (high nibble, 4bits) + flags (nibble)
 	db 0x00										; Base (high word high byte)
 
-	; Data Descriptor (selector: 0x10)
+; Data Descriptor (selector: 0x10)
+.data_desc:
 	dw 0xffff									; Limit
 	dw 0x0000									; Base (low word)
 	db 0x00										; Base (high word low byte)
@@ -94,6 +98,40 @@ set_a20:										; Enable A20 Gate to access high memory in protected mode (Fas
 	test al, 0x02								; do some test
 	out 0x90, al								; write to io port 0x90
 
+e820_map:										; Read E820 Memory map
+	mov di, E820_LOC + 4						; set DI to location where we'll read E820 map
+	mov eax, 0x0000E820							; command: E820 map
+	xor ebx, ebx								; clear ebx
+	mov ecx, 0x18								; set ECX to value of 24 - the max size of entry (only ACPI 3.0 has 24 byte entries)
+	mov edx, 0x534D4150							; set EDX to magic number
+	int 0x15									; call memory interrupt?
+	jc .end_fail								; if carry flag set, then we failed
+	cmp eax, 0x534D4150							; should be the magic number, is it?
+	jne .end_fail								; if magic number is not set, then we failed
+	push 1										; store entry count on the stack
+.read_more:
+	cmp ebx, 0x0								; test EBX for 0
+	je .end_ok									; if EBX is 0, this was the last entry
+	pop ax										; get entry count from the stack
+	inc ax										; increment entry count on the stack
+	push ax										; store entry count on the stack
+	mov [di - 2], cx							; save entry size
+	add di, cx									; increment DI by entry size
+	add di, 2									; increment DI by entry size offset (word size)
+	mov eax, 0x0000E820							; command: E820 map
+	int 0x15									; call memory interrupt?
+	jc .end_ok									; if carry flag set, then we failed
+	jmp .read_more								; read some more
+
+.end_fail:
+	xor eax, eax								; clear EAX
+	mov [E820_LOC], ax							; no entries on E820 map
+	jmp load_gdt								; continiue to GDT loader
+
+.end_ok:
+	pop ax										; get entry count
+	mov [E820_LOC], ax							; save entry count before our memory structure
+	
 load_gdt:										; Load Global Descriptor Table
 	lgdt [gdt_ptr]								; gdt_ptr is an address to memory so we enclose it in []
 	
@@ -120,12 +158,12 @@ start32:										; Setup all the data segments
 
 ;disable_paging:								; Disable paging
 ;	mov eax, cr0								; read from Control Register CR0
-;	and eax, 0x7FFFFFFF							; clear Paging bit
+;	and eax, 0x7FFFFFFF							; clear Paging enabled (PE) bit
 ;	mov cr0, eax								; write to Control Register CR0
 	
 ;enable_pae:									; Enable PAE
 ;	mov eax, cr4								; read from Control Registar CR4
-;	or eax, 0x0010								; set PAE enabled bit
+;	or eax, 0x0050								; set PAE and PGE bits
 ;	mov cr4, eax								; write to Control Register CR4
 
 ; TODO: setup PML4 that goes something like this:

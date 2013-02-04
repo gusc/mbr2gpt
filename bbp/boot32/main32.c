@@ -9,12 +9,22 @@
 #include "acpi.h"
 
 // Defined in boot16.asm .data section
+extern gdt_entry_t gdt[3];
+extern gdt_ptr_t gdt_ptr;
 extern idt_entry_t idt[256];
 extern idt_ptr_t idt_ptr;
 
 // Teletype screen coordinates
 static uint32 sx = 0;
 static uint32 sy = 0;
+
+typedef struct {
+	uint16 entry_size;	// if 24, then it has attributes
+	uint64 base;
+	uint64 length;
+	uint32 type;
+	uint32 attributes; // ACPI 3.0 only
+} __PACKED e820_entry_t;
 
 /**
 * Initialize all the interrupts
@@ -61,8 +71,22 @@ static char *ints[] = {
 * @return void
 */
 void main32(){
+	uint16 e820_count = *((uint16 *)0x0800);
+	e820_entry_t *e820_table = (e820_entry_t *)0x0802;
+
 	screen_clear(0x07);
 	screen_print_str("BBP is working fine!", 0x05, sx, sy++);
+	
+	screen_print_str("E820 Memory Map:", 0x05, sx, sy++);
+	while (e820_count--){
+		if (e820_table->length > 0){
+			screen_print_int((uint32)e820_table->type, 0x05, sx, sy++);
+			screen_print_int((uint32)e820_table->base, 0x07, sx, sy++);
+			screen_print_int((uint32)e820_table->length, 0x07, sx, sy++);
+		}
+		e820_table = (e820_entry_t *)(((uint32)e820_table) + e820_table->entry_size + 2);
+	}
+
 	interrupt_init();
 
 	// Test interrupts
