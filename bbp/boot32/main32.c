@@ -8,9 +8,11 @@
 #include "io.h"
 #include "acpi.h"
 
-idt_entry_t idt[256];
-idt_ptr_t   idt_ptr;
+// Defined in boot16.asm .data section
+extern idt_entry_t idt[256];
+extern idt_ptr_t idt_ptr;
 
+// Teletype screen coordinates
 static uint32 sx = 0;
 static uint32 sy = 0;
 
@@ -29,6 +31,9 @@ static void interrupt_init();
 */
 static void idt_set_entry(uint8 num, uint32 base, uint16 sel, uint8 flags);
 
+/**
+* Exception names
+*/
 static char *ints[] = {
 	"Division by zero",
 	"Debug exception",
@@ -59,6 +64,7 @@ void main32(){
 	screen_clear(0x07);
 	screen_print_str("BBP is working fine!", 0x05, sx, sy++);
 	interrupt_init();
+
 	// Test interrupts
 
 	//uint32 a = 12;
@@ -147,9 +153,6 @@ void main32(){
 }
 
 static void interrupt_init(){
-	idt_ptr.limit = (sizeof(idt_entry_t) * 256) - 1;
-	idt_ptr.base  = (uint32)&idt;
-
 	mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t) * 256);
 
 	// Remap the IRQ table.
@@ -245,6 +248,7 @@ void isr_handler(registers_t regs){
 		sy = 0;
 	}
 }
+
 void irq_handler(registers_t regs){
 	screen_print_str("IRQ ", 0x08, sx, sy);
 	screen_print_int(regs.err_code, 0x05, sx + 4, sy++);

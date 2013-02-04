@@ -22,6 +22,7 @@
     <ClCompile Include="boot64\main64.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="boot16.h" />
     <ClInclude Include="boot32\acpi.h" />
     <ClInclude Include="boot32\common.h" />
     <ClInclude Include="boot32\cpuid.h" />
