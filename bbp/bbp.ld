@@ -12,9 +12,11 @@ SECTIONS {
 	.data : {
 		*(.data);
 	}
+	.bss : {
+		*(.bss);
+	}
 	/DISCARD/ : {
 		*(.eh_frame);
-		*(.bss);
 	}
 	. = ALIGN(512);
 }

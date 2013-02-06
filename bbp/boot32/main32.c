@@ -15,8 +15,8 @@ extern idt_entry_t idt[256];
 extern idt_ptr_t idt_ptr;
 
 // Teletype screen coordinates
-static uint32 sx = 0;
-static uint32 sy = 0;
+uint32 sx = 0;
+uint32 sy = 0;
 
 typedef struct {
 	uint16 entry_size;	// if 24, then it has attributes
