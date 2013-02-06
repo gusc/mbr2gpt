@@ -54,8 +54,8 @@ gdt_end:
 
 ; GDT pointer
 gdt_ptr:
-	dw (gdt_end - gdt - 1)
-	dd (gdt + 0x0000)
+	dw (gdt_end - gdt - 1)						; Limit (size)
+	dd (gdt + 0x0000)							; Base (location)
 gdt_ptr_end:
 
 ; Interrupt Descriptor Table (IDT)
@@ -65,15 +65,15 @@ idt_end:
 
 ; IDT pointer
 idt_ptr:
-	dw (idt_end - idt - 1)
-	dd (idt + 0x0000)
+	dw (idt_end - idt - 1)						; Limit (size)
+	dd (idt + 0x0000)							; Base (location)
 idt_ptr_end:
 
 
 [section .text]
 [global start16]								; Export start16 to linker
 [extern main32]									; Import main32() from C
-;[extern main64]								; Import main64() from C
+[extern main64]									; Import main64() from C
 
 ; Remember in NASM it's:
 ; instruction destination, source
@@ -81,7 +81,7 @@ idt_ptr_end:
 [bits 16]										; Real mode
 
 start16:										; Our entry point
-	xor ax, ax									; clear ax
+	xor eax, eax								; clear ax
 	mov ss, ax									; set stack segment to zero (is it, i'm dumb in assembly?)
 	mov sp, ORG_LOC								; set stack pointer to the begining of MBR location in memory
 	mov es, ax									; zero-out extra segment
