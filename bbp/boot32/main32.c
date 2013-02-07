@@ -13,6 +13,7 @@ extern gdt_entry_t gdt[3];
 extern gdt_ptr_t gdt_ptr;
 extern idt_entry_t idt[256];
 extern idt_ptr_t idt_ptr;
+extern uint32 pml4_ptr;
 
 // Teletype screen coordinates
 uint32 sx = 0;
@@ -26,11 +27,29 @@ typedef struct {
 	uint32 attributes; // ACPI 3.0 only
 } __PACKED e820_entry_t;
 
+
+/**
+* Initialize memory map
+* @return void
+*/
+static void memmap_init();
 /**
 * Initialize all the interrupts
 * @return void
 */
 static void interrupt_init();
+/**
+* Initialize ACPI tables
+* @return void
+*/
+static void acpi_init();
+/**
+* Initialize page tables
+* @return void
+*/
+static void page_init();
+
+
 /**
 * Set an entry in Interrupt Descriptor Table (IDT)
 * @param num - interrupt number
@@ -71,12 +90,27 @@ static char *ints[] = {
 * @return void
 */
 void main32(){
-	uint16 e820_count = *((uint16 *)0x0800);
-	e820_entry_t *e820_table = (e820_entry_t *)0x0802;
-
 	screen_clear(0x07);
 	screen_print_str("BBP is working fine!", 0x05, sx, sy++);
 	
+	// Initialize memory map
+	memmap_init();
+	// Initialize interrupts
+	interrupt_init();
+	// Initialize ACPI
+	acpi_init();
+	// Initialize paging
+	page_init();
+
+	// Infinite loop
+	while(true){}
+
+	return; // We are ready for 64bit jump
+}
+
+static void memmap_init(){
+	uint16 e820_count = *((uint16 *)0x0800);
+	e820_entry_t *e820_table = (e820_entry_t *)0x0802;
 	screen_print_str("E820 Memory Map:", 0x05, sx, sy++);
 	while (e820_count--){
 		if (e820_table->length > 0){
@@ -86,20 +120,76 @@ void main32(){
 		}
 		e820_table = (e820_entry_t *)(((uint32)e820_table) + e820_table->entry_size + 2);
 	}
+}
 
-	interrupt_init();
+static void interrupt_init(){
+	mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t) * 256);
 
-	// Test interrupts
+	// Remap the IRQ table.
+	outb(0x20, 0x11); // Initialize master PIC
+	outb(0xA0, 0x11); // Initialize slave PIC
+	outb(0x21, 0x20); // Master PIC vector offset (IRQ0 target interrupt number)
+	outb(0xA1, 0x28); // Slave PIC vector offset (IRQ8 landing interrupt number)
+	outb(0x21, 0x04); // Tell Master PIC that Slave PIC is at IRQ2
+	outb(0xA1, 0x02); // Tell Slave PIC that it's cascaded to IRQ2
+	outb(0x21, 0x01); // Enable 8085 mode (whatever that means)
+	outb(0xA1, 0x01); // Enable 8085 mode (whatever that means)
+	outb(0x21, 0x0); // Clear masks
+	outb(0xA1, 0x0); // Clear masks
 
-	//uint32 a = 12;
-	//uint32 b = 0;
-	//uint32 c = a / b; // Invoke int 0x00
+	idt_set_entry( 0, (uint32)isr0 , 0x08, 0x8E);	// Division by zero exception
+	idt_set_entry( 1, (uint32)isr1 , 0x08, 0x8E);	// Debug exception
+	idt_set_entry( 2, (uint32)isr2 , 0x08, 0x8E);	// Non maskable (external) interrupt
+	idt_set_entry( 3, (uint32)isr3 , 0x08, 0x8E);	// Breakpoint exception
+	idt_set_entry( 4, (uint32)isr4 , 0x08, 0x8E);	// INTO instruction overflow exception
+	idt_set_entry( 5, (uint32)isr5 , 0x08, 0x8E);	// Out of bounds exception (BOUND instruction)
+	idt_set_entry( 6, (uint32)isr6 , 0x08, 0x8E);	// Invalid opcode exception
+	idt_set_entry( 7, (uint32)isr7 , 0x08, 0x8E);	// No coprocessor exception
+	idt_set_entry( 8, (uint32)isr8 , 0x08, 0x8E);	// Double fault (pushes an error code)
+	idt_set_entry( 9, (uint32)isr9 , 0x08, 0x8E);	// Coprocessor segment overrun
+	idt_set_entry(10, (uint32)isr10, 0x08, 0x8E);	// Bad TSS (pushes an error code)
+	idt_set_entry(11, (uint32)isr11, 0x08, 0x8E);	// Segment not present (pushes an error code)
+	idt_set_entry(12, (uint32)isr12, 0x08, 0x8E);	// Stack fault (pushes an error code)
+	idt_set_entry(13, (uint32)isr13, 0x08, 0x8E);	// General protection fault (pushes an error code)
+	idt_set_entry(14, (uint32)isr14, 0x08, 0x8E);	// Page fault (pushes an error code)
+	idt_set_entry(15, (uint32)isr15, 0x08, 0x8E);	// Reserved
+	idt_set_entry(16, (uint32)isr16, 0x08, 0x8E);	// FPU exception
+	idt_set_entry(17, (uint32)isr17, 0x08, 0x8E);	// Alignment check exception
+	idt_set_entry(18, (uint32)isr18, 0x08, 0x8E);	// Machine check exception
+	idt_set_entry(19, (uint32)isr19, 0x08, 0x8E);	// Reserved
+	idt_set_entry(20, (uint32)isr20, 0x08, 0x8E);	// Reserved
+	idt_set_entry(21, (uint32)isr21, 0x08, 0x8E);	// Reserved
+	idt_set_entry(22, (uint32)isr22, 0x08, 0x8E);	// Reserved
+	idt_set_entry(23, (uint32)isr23, 0x08, 0x8E);	// Reserved
+	idt_set_entry(24, (uint32)isr24, 0x08, 0x8E);	// Reserved
+	idt_set_entry(25, (uint32)isr25, 0x08, 0x8E);	// Reserved
+	idt_set_entry(26, (uint32)isr26, 0x08, 0x8E);	// Reserved
+	idt_set_entry(27, (uint32)isr27, 0x08, 0x8E);	// Reserved
+	idt_set_entry(28, (uint32)isr28, 0x08, 0x8E);	// Reserved
+	idt_set_entry(29, (uint32)isr29, 0x08, 0x8E);	// Reserved
+	idt_set_entry(30, (uint32)isr30, 0x08, 0x8E);	// Reserved
+	idt_set_entry(31, (uint32)isr31, 0x08, 0x8E);	// Reserved
+	idt_set_entry(32, (uint32)irq0, 0x08, 0x8E);	// IRQ0 - Programmable Interrupt Timer Interrupt
+	idt_set_entry(33, (uint32)irq1, 0x08, 0x8E);	// IRQ1 - Keyboard Interrupt
+	idt_set_entry(34, (uint32)irq2, 0x08, 0x8E);	// IRQ2 - Cascade (used internally by the two PICs. never raised)
+	idt_set_entry(35, (uint32)irq3, 0x08, 0x8E);	// IRQ3 - COM2 (if enabled)
+	idt_set_entry(36, (uint32)irq4, 0x08, 0x8E);	// IRQ4 - COM1 (if enabled)
+	idt_set_entry(37, (uint32)irq5, 0x08, 0x8E);	// IRQ5 - LPT2 (if enabled)
+	idt_set_entry(38, (uint32)irq6, 0x08, 0x8E);	// IRQ6 - Floppy Disk
+	idt_set_entry(39, (uint32)irq7, 0x08, 0x8E);	// IRQ7 - LPT1 / Unreliable "spurious" interrupt (usually)
+	idt_set_entry(40, (uint32)irq8, 0x08, 0x8E);	// IRQ8 - CMOS real-time clock (if enabled)
+	idt_set_entry(41, (uint32)irq9, 0x08, 0x8E);	// IRQ9 - Free for peripherals / legacy SCSI / NIC
+	idt_set_entry(42, (uint32)irq10, 0x08, 0x8E);	// IRQ10 - Free for peripherals / SCSI / NIC
+	idt_set_entry(43, (uint32)irq11, 0x08, 0x8E);	// IRQ11 - Free for peripherals / SCSI / NIC
+	idt_set_entry(44, (uint32)irq12, 0x08, 0x8E);	// IRQ12 - PS2 Mouse
+	idt_set_entry(45, (uint32)irq13, 0x08, 0x8E);	// IRQ13 - FPU / Coprocessor / Inter-processor
+	idt_set_entry(46, (uint32)irq14, 0x08, 0x8E);	// IRQ14 - Primary ATA Hard Disk
+	idt_set_entry(47, (uint32)irq15, 0x08, 0x8E);	// IRQ15 - Secondary ATA Hard Disk
 
-	//asm volatile("int $0x3"); // Invoke "breakpoint"
-	
-	// Test ACPI
+	idt_set((uint32)&idt_ptr);
+}
 
-	/*
+static void acpi_init(){
 	RSDP_t *rsdp = acpi_find();
 	screen_print_int((uint32)rsdp, 0x07, sx, sy++);
 	
@@ -170,77 +260,10 @@ void main32(){
 			screen_print_str("found SSDT", 0x07, sx, sy++);
 		}
 	}
-	*/
-	
-	// Infinite loop
-	while(true){}
 }
 
-static void interrupt_init(){
-	mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t) * 256);
+static void page_init(){
 
-	// Remap the IRQ table.
-	outb(0x20, 0x11); // Initialize master PIC
-	outb(0xA0, 0x11); // Initialize slave PIC
-	outb(0x21, 0x20); // Master PIC vector offset (IRQ0 target interrupt number)
-	outb(0xA1, 0x28); // Slave PIC vector offset (IRQ8 landing interrupt number)
-	outb(0x21, 0x04); // Tell Master PIC that Slave PIC is at IRQ2
-	outb(0xA1, 0x02); // Tell Slave PIC that it's cascaded to IRQ2
-	outb(0x21, 0x01); // Enable 8085 mode (whatever that means)
-	outb(0xA1, 0x01); // Enable 8085 mode (whatever that means)
-	outb(0x21, 0x0); // Clear masks
-	outb(0xA1, 0x0); // Clear masks
-
-	idt_set_entry( 0, (uint32)isr0 , 0x08, 0x8E);	// Division by zero exception
-	idt_set_entry( 1, (uint32)isr1 , 0x08, 0x8E);	// Debug exception
-	idt_set_entry( 2, (uint32)isr2 , 0x08, 0x8E);	// Non maskable (external) interrupt
-	idt_set_entry( 3, (uint32)isr3 , 0x08, 0x8E);	// Breakpoint exception
-	idt_set_entry( 4, (uint32)isr4 , 0x08, 0x8E);	// INTO instruction overflow exception
-	idt_set_entry( 5, (uint32)isr5 , 0x08, 0x8E);	// Out of bounds exception (BOUND instruction)
-	idt_set_entry( 6, (uint32)isr6 , 0x08, 0x8E);	// Invalid opcode exception
-	idt_set_entry( 7, (uint32)isr7 , 0x08, 0x8E);	// No coprocessor exception
-	idt_set_entry( 8, (uint32)isr8 , 0x08, 0x8E);	// Double fault (pushes an error code)
-	idt_set_entry( 9, (uint32)isr9 , 0x08, 0x8E);	// Coprocessor segment overrun
-	idt_set_entry(10, (uint32)isr10, 0x08, 0x8E);	// Bad TSS (pushes an error code)
-	idt_set_entry(11, (uint32)isr11, 0x08, 0x8E);	// Segment not present (pushes an error code)
-	idt_set_entry(12, (uint32)isr12, 0x08, 0x8E);	// Stack fault (pushes an error code)
-	idt_set_entry(13, (uint32)isr13, 0x08, 0x8E);	// General protection fault (pushes an error code)
-	idt_set_entry(14, (uint32)isr14, 0x08, 0x8E);	// Page fault (pushes an error code)
-	idt_set_entry(15, (uint32)isr15, 0x08, 0x8E);	// Reserved
-	idt_set_entry(16, (uint32)isr16, 0x08, 0x8E);	// FPU exception
-	idt_set_entry(17, (uint32)isr17, 0x08, 0x8E);	// Alignment check exception
-	idt_set_entry(18, (uint32)isr18, 0x08, 0x8E);	// Machine check exception
-	idt_set_entry(19, (uint32)isr19, 0x08, 0x8E);	// Reserved
-	idt_set_entry(20, (uint32)isr20, 0x08, 0x8E);	// Reserved
-	idt_set_entry(21, (uint32)isr21, 0x08, 0x8E);	// Reserved
-	idt_set_entry(22, (uint32)isr22, 0x08, 0x8E);	// Reserved
-	idt_set_entry(23, (uint32)isr23, 0x08, 0x8E);	// Reserved
-	idt_set_entry(24, (uint32)isr24, 0x08, 0x8E);	// Reserved
-	idt_set_entry(25, (uint32)isr25, 0x08, 0x8E);	// Reserved
-	idt_set_entry(26, (uint32)isr26, 0x08, 0x8E);	// Reserved
-	idt_set_entry(27, (uint32)isr27, 0x08, 0x8E);	// Reserved
-	idt_set_entry(28, (uint32)isr28, 0x08, 0x8E);	// Reserved
-	idt_set_entry(29, (uint32)isr29, 0x08, 0x8E);	// Reserved
-	idt_set_entry(30, (uint32)isr30, 0x08, 0x8E);	// Reserved
-	idt_set_entry(31, (uint32)isr31, 0x08, 0x8E);	// Reserved
-	idt_set_entry(32, (uint32)irq0, 0x08, 0x8E);	// IRQ0 - Programmable Interrupt Timer Interrupt
-	idt_set_entry(33, (uint32)irq1, 0x08, 0x8E);	// IRQ1 - Keyboard Interrupt
-	idt_set_entry(34, (uint32)irq2, 0x08, 0x8E);	// IRQ2 - Cascade (used internally by the two PICs. never raised)
-	idt_set_entry(35, (uint32)irq3, 0x08, 0x8E);	// IRQ3 - COM2 (if enabled)
-	idt_set_entry(36, (uint32)irq4, 0x08, 0x8E);	// IRQ4 - COM1 (if enabled)
-	idt_set_entry(37, (uint32)irq5, 0x08, 0x8E);	// IRQ5 - LPT2 (if enabled)
-	idt_set_entry(38, (uint32)irq6, 0x08, 0x8E);	// IRQ6 - Floppy Disk
-	idt_set_entry(39, (uint32)irq7, 0x08, 0x8E);	// IRQ7 - LPT1 / Unreliable "spurious" interrupt (usually)
-	idt_set_entry(40, (uint32)irq8, 0x08, 0x8E);	// IRQ8 - CMOS real-time clock (if enabled)
-	idt_set_entry(41, (uint32)irq9, 0x08, 0x8E);	// IRQ9 - Free for peripherals / legacy SCSI / NIC
-	idt_set_entry(42, (uint32)irq10, 0x08, 0x8E);	// IRQ10 - Free for peripherals / SCSI / NIC
-	idt_set_entry(43, (uint32)irq11, 0x08, 0x8E);	// IRQ11 - Free for peripherals / SCSI / NIC
-	idt_set_entry(44, (uint32)irq12, 0x08, 0x8E);	// IRQ12 - PS2 Mouse
-	idt_set_entry(45, (uint32)irq13, 0x08, 0x8E);	// IRQ13 - FPU / Coprocessor / Inter-processor
-	idt_set_entry(46, (uint32)irq14, 0x08, 0x8E);	// IRQ14 - Primary ATA Hard Disk
-	idt_set_entry(47, (uint32)irq15, 0x08, 0x8E);	// IRQ15 - Secondary ATA Hard Disk
-
-	idt_set((uint32)&idt_ptr);
 }
 
 static void idt_set_entry(uint8 num, uint32 base, uint16 sel, uint8 flags){

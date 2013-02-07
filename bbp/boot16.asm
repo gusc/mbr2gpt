@@ -20,7 +20,7 @@
 [global gdt_ptr]								; Make GDT pointer accessible from C
 [global idt]									; Make IDT accessible from C
 [global idt_ptr]								; Make IDT pointer accessible from C
-;[global pml4]									; Make PML4 pointer accessible from C
+[global pml4_ptr]								; Make PML4 pointer accessible from C
 
 ; Global Descriptor Table (GDT) used to do a Protected Mode jump
 gdt:
@@ -60,7 +60,7 @@ gdt_ptr_end:
 
 ; Interrupt Descriptor Table (IDT)
 idt:
-	times (64 * 256) db 0						; Dummy entries - we'll populate them in C
+	times (64 * 256) db 0						; Dummy entries - we'll populate them main32
 idt_end:
 
 ; IDT pointer
@@ -69,6 +69,10 @@ idt_ptr:
 	dd (idt + 0x0000)							; Base (location)
 idt_ptr_end:
 
+; PML4 pointer
+pml4_ptr:
+	dd 0										; Dummy entry - we'll populate it in main32
+pml4_ptr_end:
 
 [section .text]
 [global start16]								; Export start16 to linker
@@ -156,45 +160,45 @@ start32:										; Setup all the data segments
 
 ; If we can not do it in C we'll try to do it in ASM here:
 
-;disable_paging:								; Disable paging
-;	mov eax, cr0								; read from Control Register CR0
-;	and eax, 0x7FFFFFFF							; clear Paging enabled (PE) bit
-;	mov cr0, eax								; write to Control Register CR0
+disable_paging:									; Disable paging
+	mov eax, cr0								; read from Control Register CR0
+	and eax, 0x7FFFFFFF							; clear Paging enabled (PE) bit
+	mov cr0, eax								; write to Control Register CR0
 	
-;enable_pae:									; Enable PAE
-;	mov eax, cr4								; read from Control Registar CR4
-;	or eax, 0x0050								; set PAE and PGE bits
-;	mov cr4, eax								; write to Control Register CR4
+enable_pae:										; Enable PAE
+	mov eax, cr4								; read from Control Registar CR4
+	or eax, 0x0050								; set PAE and PGE bits
+	mov cr4, eax								; write to Control Register CR4
 
-; TODO: setup PML4 that goes something like this:
-;	mov eax, pml4_ptr							; copy PML4 pointer address to eax
-;	mov cr3, eax								; set PML4 pointer address in CR3
+set_pml4_ptr:
+	mov eax, pml4_ptr							; copy PML4 pointer address to eax
+	mov cr3, eax								; set PML4 pointer address in CR3
 
-;ia32e_mode:									; Enter Long Mode
-;	mov ecx, 0xC0000080							; set to work with EFER MSR
-;	rdmsr 										; read EFER MSR
-;	or edx, 0x80								; set Long mode enabled (LME) bit
-;	wrmsr										; write EFER MSR
+ia32e_mode:										; Enter Long Mode
+	mov ecx, 0xC0000080							; set to work with EFER MSR
+	rdmsr 										; read EFER MSR
+	or edx, 0x80								; set Long mode enabled (LME) bit
+	wrmsr										; write EFER MSR
 
-;enable_paging:
-;	mov eax, cr0								; read from Control Register CR0
-;	or eax, 80000000							; set Paging bit
-;	mov cr0, eax								; write to Control Register CR0
+enable_paging:
+	mov eax, cr0								; read from Control Register CR0
+	or eax, 80000000							; set Paging bit
+	mov cr0, eax								; write to Control Register CR0
 
-;reload_gdt:									; Re-Load Global Descriptor Table
-;	lgdt [gdt_ptr]								; gdt_ptr is an address to memory so we enclose it in []
-;	jmp 0x8:start64								; do the magic jump to finalize Long Mode setup
+reload_gdt:										; Re-Load Global Descriptor Table
+	lgdt [gdt_ptr]								; gdt_ptr is an address to memory so we enclose it in []
+	jmp 0x8:start64								; do the magic jump to finalize Long Mode setup
 
-;[bits 64]										; Long mode
+[bits 64]										; Long mode
 
-;start64:										; Transfer control to C
-;	mov rax, 0x0010								; selector 0x10 - data descriptor
-;	mov ss, ax									; set Stack Segment
-;	mov ds, ax									; set Data Segment
-;	mov es, ax									; set Extra Segment
-;	mov fs, ax									; set Data2 Segment
-;	mov gs, ax									; set Data3 Segment
-;	sti											; enable interrupts
-;	call main64									; call C function main64() (see: boot64/main64.c)
-;	cli											; disable interrupts
-;	jmp $										; hang
+start64:										; Transfer control to C
+	mov rax, 0x0010								; selector 0x10 - data descriptor
+	mov ss, ax									; set Stack Segment
+	mov ds, ax									; set Data Segment
+	mov es, ax									; set Extra Segment
+	mov fs, ax									; set Data2 Segment
+	mov gs, ax									; set Data3 Segment
+	sti											; enable interrupts
+	call main64									; call C function main64() (see: boot64/main64.c)
+	cli											; disable interrupts
+	jmp $										; hang
