@@ -3,14 +3,14 @@ OUTPUT_FORMAT(binary)
 ENTRY(start16)
 SECTIONS {
 	.text 0x7C00 : AT( 0x7C00 ) {
-		boot16.s.o(.text); 
+		boot.o(.text); 
 		*(.text);
-	}
-	.rodata : {
-		*(.rodata);
 	}
 	.data : {
 		*(.data);
+	}
+	.rodata : {
+		*(.rodata);
 	}
 	.bss : {
 		*(.bss);
@@ -18,5 +18,5 @@ SECTIONS {
 	/DISCARD/ : {
 		*(.eh_frame);
 	}
-	. = ALIGN(512);
+	. = ALIGN(1024);
 }

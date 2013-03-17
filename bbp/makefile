@@ -1,18 +1,18 @@
 AS = nasm -felf64 -O0
 LD = x86_64-pc-elf-ld -melf_x86_64
-OBJECTS = boot16.s.o boot32_64.o boot64.o
+OBJECTS = boot.o kernel.o
 
 all: $(OBJECTS)
 	$(LD) -T bbp.ld $(OBJECTS) -o ../Release/bbp.img
 
-boot32_64.o:
-	make -C boot32/
+boot.o:
+	make -C boot/
 
-boot64.o:
-	make -C boot64/	
+kernel.o:
+	make -C kernel/	
 
 %.s.o: %.asm
 	$(AS) -o $@ $<
 
 clean:
-	rm -f *.o boot32/*.o boot64/*.o ../Release/bbp.img ../Release/disk.img
+	rm -f *.o boot/*.o kernel/*.o ../Release/bbp.img ../Release/disk.img

@@ -7,11 +7,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="boot16.asm" />
     <None Include="boot32\descriptors.asm" />
     <None Include="boot32\gdt.asm" />
     <None Include="boot32\idt.asm" />
     <None Include="boot32\interrupts.asm" />
+    <None Include="boot\bios.asm" />
+    <None Include="boot\boot.asm" />
+    <None Include="kernel\gdt.asm" />
+    <None Include="kernel\idt.asm" />
+    <None Include="kernel\interrupts.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="boot32\acpi.c" />
@@ -20,6 +24,13 @@
     <ClCompile Include="boot32\screen.c" />
     <ClCompile Include="boot32\string.c" />
     <ClCompile Include="boot64\main64.c" />
+    <ClCompile Include="boot\main16.c" />
+    <ClCompile Include="boot\main32.c" />
+    <ClCompile Include="kernel\acpi.c" />
+    <ClCompile Include="kernel\kmain.c" />
+    <ClCompile Include="kernel\memory.c" />
+    <ClCompile Include="kernel\screen.c" />
+    <ClCompile Include="kernel\string.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="boot32\acpi.h" />
@@ -37,6 +48,23 @@
     <ClInclude Include="boot32\string.h" />
     <ClInclude Include="boot64\common.h" />
     <ClInclude Include="boot64\main64.h" />
+    <ClInclude Include="boot\common16.h" />
+    <ClInclude Include="boot\common32.h" />
+    <ClInclude Include="boot\main16.h" />
+    <ClInclude Include="boot\main32.h" />
+    <ClInclude Include="config.h" />
+    <ClInclude Include="kernel\acpi.h" />
+    <ClInclude Include="kernel\common.h" />
+    <ClInclude Include="kernel\cpuid.h" />
+    <ClInclude Include="kernel\gdt.h" />
+    <ClInclude Include="kernel\idt.h" />
+    <ClInclude Include="kernel\interrupts.h" />
+    <ClInclude Include="kernel\io.h" />
+    <ClInclude Include="kernel\kmain.h" />
+    <ClInclude Include="kernel\memory.h" />
+    <ClInclude Include="kernel\msr.h" />
+    <ClInclude Include="kernel\screen.h" />
+    <ClInclude Include="kernel\string.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3D779CE6-A610-49F7-AC07-992AEEB4115D}</ProjectGuid>
@@ -57,7 +85,7 @@
     <NMakeBuildCommandLine>make -C "$(ProjectDir)"
 buildimg.bat</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>$(NMakeBuildCommandLine)</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>del *.o "boot32\*.o" "boot64\*.o" "..\Release\bbp.img" "..\Release\disk.img"</NMakeCleanCommandLine>
+    <NMakeCleanCommandLine>del *.o "boot\*.o" "kernel\*.o" "..\Release\bbp.img" "..\Release\disk.img"</NMakeCleanCommandLine>
     <IncludePath />
     <ReferencePath />
     <LibraryPath />
