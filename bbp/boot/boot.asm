@@ -70,11 +70,11 @@ start16:										; Boot entry point
 	mov fs, ax									; zero out general purpose data segment register (FS)
 	mov gs, ax									; zero out general purpose data segment register (FS)
 	mov sp, ORG_LOC								; set stack pointer to the begining of MBR location in memory
-	
+
 	; Call Real Mode initialization
 	cli											; disable all maskable interrupts
 	call main16									; call C function main16() (see: boot/main16.c)
-	
+
 	; Enter Protected mode
 	lgdt [gdt_ptr]								; load 32bit GDT pointer
 	mov eax, cr0								; read from CR0
@@ -95,37 +95,37 @@ start32:										; Protected mode entry point
 
 	; Call Protected Mode Initialization
 	call main32									; call C function main32() (see: boot/main32.c)
-	
+
 	; Disable all IRQs
 	mov al, 0xFF								; set out 0xFF to 0xA1 and 0x21 to disable all IRQs
-    out 0xA1, al
-    out 0x21, al
+	out 0xA1, al
+	out 0x21, al
 
 	; Pause
-    nop
-    nop
+	nop
+	nop
 
 	; Load IDT (empty pointer for now  so that any NMI causes a triple fault)										
-    lidt [idt_ptr]								; load 32bit IDT pointer
+	lidt [idt_ptr]								; load 32bit IDT pointer
 
-    ; Setup long mode.
+	; Setup long mode.
 	mov eax, cr4								; read from CR4
-    or eax, 0x000000A0							; set the PAE and PGE bit
-    mov cr4, eax								; write to CR4
-    mov edx, [pml4_ptr]							; point edx to PML4 pointer location
-    mov cr3, edx								; save this into CR3
-    mov ecx, 0xC0000080							; read from the EFER MSR
-    rdmsr										; read MSR
-    or eax, 0x00000100							; set the LME bit
-    wrmsr										; write MSR
+	or eax, 0x000000A0							; set the PAE and PGE bit
+	mov cr4, eax								; write to CR4
+	mov edx, [pml4_ptr]							; point edx to PML4 pointer location
+	mov cr3, edx								; save this into CR3
+	mov ecx, 0xC0000080							; read from the EFER MSR
+	rdmsr										; read MSR
+	or eax, 0x00000100							; set the LME bit
+	wrmsr										; write MSR
 
 	; Activate Long Mode
-    mov ebx, cr0								; read from CR0
+	mov ebx, cr0								; read from CR0
 	or ebx,0x80000000							; set enabling paging bit
-    mov cr0, ebx								; write to CR0
-    lgdt [gdt64_ptr]							; load 64bit GDT pointer
+	mov cr0, ebx								; write to CR0
+	lgdt [gdt64_ptr]							; load 64bit GDT pointer
 	jmp 0x8:start64								; do the magic jump to Long Mode
-	
+
 [bits 64]										; Long mode
 
 start64:										; Long Mode entry point
@@ -138,7 +138,7 @@ start64:										; Long Mode entry point
 	xor rsi, rsi								; aka r4
 	xor rdi, rdi								; aka r5
 	xor rbp, rbp								; aka r6
-	mov rsp, ORG_LOC							; aka r7
+	mov rsp, ORG_LOC							; aka r7 and restart the stack
 	xor r8, r8
 	xor r9, r9
 	xor r10, r10
