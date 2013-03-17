@@ -7,9 +7,9 @@ File list
 ---------
 
 Main entry files:
-* boot16.asm - main BBP entry code (real mode code)
-* boot32/ - protected mode code
-* boot64/ - long mode code
+* boot/boot.asm - main BBP entry code (real mode code)
+* boot/ - Real Mode -> Protected Mode -> Long Mode bootstrap code
+* kernel/ - Kernel code
 
 Build files:
 * bbp.ld - BBP linker script
@@ -21,7 +21,7 @@ Build files:
 Requirements
 ------------
 
-* MinGW Cross-compiler that's capable of building ELF files. See how to build one here: http://gusc.lv/2012/12/myos-mingw-cross-compiler/
+* MinGW Cross-compiler that's capable of building ELF64 files. See how to build one here: http://gusc.lv/2012/12/myos-mingw-cross-compiler/
 * Netwide Assembler from: http://www.nasm.us/
 * DiskUtils from: https://github.com/gusc/diskutils
 * Microsoft Visual Studio Express 2010

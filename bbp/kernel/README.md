@@ -1,13 +1,13 @@
-Boot32
+Kernel
 ======
 
-This is the Protected mode BBP bootcode
+This is the Long Mode BBP kernel code
 
 File list
 ---------
 
 Main entry files:
-* main32.c - C entry point that get's called by boot16.asm
+* kmain.c - C entry point that get's called by ../boot/boot.asm
 
 Helper files:
 * acpi.c - ACPI table lokup implementation
@@ -27,5 +27,5 @@ Helper files:
 * string.* - string functions
 
 Build files:
-* boot32.ld - Boot32 linker script (unused)
+* kernel.ld - Kernel linker script
 * makefile - Make build script
