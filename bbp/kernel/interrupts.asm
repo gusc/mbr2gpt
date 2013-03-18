@@ -1,8 +1,10 @@
 ;
-; Interrupt wrappers
+; Helper functions for operations interrupts
 ; ==================
 ;
-; This file contains Interrupt wrapper subroutine that calls a C function interrupt_handler()
+; This contains imports from ASM stub subroutines that catch all the neccessary
+; exception interrupts and calls a C function interrupt_handler().
+; It also contains LIDT wrapper function.
 ;
 ; License (BSD-3)
 ; ===============
@@ -34,18 +36,22 @@
 ;
 
 [section .text]
-
+[bits 64]
 [extern isr_handler]							; Import int_handler from C
 [extern irq_handler]							; Import irq_handler from C
+[global idt_set]								; Export void idt_set(idt_ptr_t *idt) to C
 
 ; Macro to create an intterupt service routine for interrupts that do not pass error codes 
 %macro INT_NO_ERR 1
 [global isr%1]
 isr%1:
 	cli											; disable interrupts
-	push byte 0									; set error code to 0
-	push byte %1								; set interrupt number
-	jmp isr_wrapper								; jump to our local wrapper stub
+	push qword 0								; set error code to 0
+	push qword %1								; set interrupt number
+	call isr_handler							; call void isr_handler(int_stack_t args)
+	sti											; enable interrupts
+	add rsp, 16									; cleanup stack
+	iretq										; return from interrupt handler
 %endmacro
 
 ; Macro to create an interrupt service routine for interrupts that DO pass an error code
@@ -53,8 +59,11 @@ isr%1:
 [global isr%1]
 isr%1:
 	cli											; disable interrupts
-	push byte %1								; set interrupt number
-	jmp isr_wrapper								; jump to our local wrapper stub
+	push qword %1								; set interrupt number
+	call isr_handler							; call void isr_handler(int_stack_t args)
+	sti											; enable interrupts
+	add rsp, 16									; cleanup stack
+	iretq										; return from interrupt handler
 %endmacro
 
 ; Macro to create an IRQ interrupt service routine
@@ -64,10 +73,19 @@ isr%1:
 [global irq%1]
 irq%1:
 	cli											; disable interrupts
-	push byte %1								; set IRQ number in the place of error code (see registers_t in interrupts.h)
-	push byte %2								; set interrupt number
-	jmp irq_wrapper								; jump to our local wrapper stub
+	push qword %1								; set IRQ number in the place of error code (see registers_t in interrupts.h)
+	push qword %2								; set interrupt number
+	call irq_handler							; calls void irq_handler(int_stack_t args)
+	sti											; enable interrupts
+	add rsp, 16									; cleanup stack
+	iretq										; return from interrupt handler
 %endmacro
+
+idt_set:										; prototype: void idt_set(uint32 idt_ptr)
+	cli											; disable interrupts
+	lidt [rdi]									; load the IDT (x86_64 calling convention - 1st argument goes into RDI)
+	sti											; enable interrupts
+	ret											; return to C
 
 ; Setup all the neccessary service routines with macros
 INT_NO_ERR 0
@@ -118,49 +136,3 @@ IRQ 12, 44
 IRQ 13, 45
 IRQ 14, 46
 IRQ 15, 47
-
-isr_wrapper:									; Local interrupt handler wrapper
-	pusha										; push all the register on the stack edi,esi,ebp,esp,ebx,edx,ecx,eax
-	mov ax, ds									; store ds in lower 16-bits of eax
-	push eax									; save the data segment descriptor
-	mov ax, 0x10								; load the kernel data segment descriptor
-	mov ds, ax									; set Data Segment
-	mov es, ax									; set Extra Segment
-	mov fs, ax									; set Data2 Segment
-	mov gs, ax									; set Data3 Segment
-
-	call isr_handler							; call our isr_handler() C function 
-
-	pop ebx										; reload the original data segment descriptor
-	mov ds, bx									; set Data Segment
-	mov es, bx									; set Extra Segment
-	mov fs, bx									; set Data2 Segment
-	mov gs, bx									; set Data3 Segment
-	popa										; pop  all the registers from the stack
-	add esp, 8									; cleans up the pushed error code and pushed ISR number
-	sti											; re-enable interrupts
-	iret										; Interrupt return
-												; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
-
-irq_wrapper:									; Local IRQ handler wrapper
-	pusha										; push all the register on the stack edi,esi,ebp,esp,ebx,edx,ecx,eax
-	mov ax, ds									; store ds in lower 16-bits of eax
-	push eax									; save the data segment descriptor
-	mov ax, 0x10								; load the kernel data segment descriptor
-	mov ds, ax									; set Data Segment
-	mov es, ax									; set Extra Segment
-	mov fs, ax									; set Data2 Segment
-	mov gs, ax									; set Data3 Segment
-
-	call irq_handler							; call our irq_handler() C function 
-
-	pop ebx										; reload the original data segment descriptor
-	mov ds, bx									; set Data Segment
-	mov es, bx									; set Extra Segment
-	mov fs, bx									; set Data2 Segment
-	mov gs, bx									; set Data3 Segment
-	popa										; pop  all the registers from the stack
-	add esp, 8									; cleans up the pushed error code and pushed ISR number
-	sti											; re-enable interrupts
-	iret										; Interrupt return
-												; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP

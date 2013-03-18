@@ -75,7 +75,7 @@ void screen_print_str(const char *message, uint8 color, uint8 x, uint8 y){
 	}
 }
 
-void screen_print_int(const uint32 value, uint8 color, uint8 x, uint8 y){
+void screen_print_int(const uint64 value, uint8 color, uint8 x, uint8 y){
 	static char integer[21] = "";
 	mem_set(0, (uint8 *)integer, 21);
 	int_to_str(value, integer, 20);

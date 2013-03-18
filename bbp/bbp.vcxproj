@@ -13,8 +13,6 @@
     <None Include="boot32\interrupts.asm" />
     <None Include="boot\bios.asm" />
     <None Include="boot\boot.asm" />
-    <None Include="kernel\gdt.asm" />
-    <None Include="kernel\idt.asm" />
     <None Include="kernel\interrupts.asm" />
   </ItemGroup>
   <ItemGroup>
@@ -56,8 +54,6 @@
     <ClInclude Include="kernel\acpi.h" />
     <ClInclude Include="kernel\common.h" />
     <ClInclude Include="kernel\cpuid.h" />
-    <ClInclude Include="kernel\gdt.h" />
-    <ClInclude Include="kernel\idt.h" />
     <ClInclude Include="kernel\interrupts.h" />
     <ClInclude Include="kernel\io.h" />
     <ClInclude Include="kernel\kmain.h" />

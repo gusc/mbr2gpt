@@ -66,6 +66,6 @@ void screen_print_str(const char *message, uint8 color, uint8 x, uint8 y);
 * @param y coordinate (a.k.a. line 0-24)
 * @return void
 */
-void screen_print_int(const uint32 value, uint8 color, uint8 x, uint8 y);
+void screen_print_int(const uint64 value, uint8 color, uint8 x, uint8 y);
 
 #endif

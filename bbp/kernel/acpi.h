@@ -42,7 +42,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * Root System Descriptor Pointer
 * See ACPI specs
 */
-typedef struct {
+struct RSDP_struct {
 	// Version 1.0
 	char signature[8];
 	uint8 checksum;
@@ -54,12 +54,13 @@ typedef struct {
 	uint64 XSDT_address;
 	uint8 extended_checksum;
 	uint8 reserved[3];
-} __PACKED RSDP_t;
+} __PACKED;
+typedef struct RSDP_struct RSDP_t;
 /**
 * Standard System Descriptor Table header structure
 * This is common to all ACPI tables
 */
-typedef struct {
+struct SDTHeader_struct {
 	char signature[4];
 	uint32 length;
 	uint8 revision;
@@ -69,39 +70,44 @@ typedef struct {
 	uint32 oem_revision;
 	uint32 creator_id;
 	uint32 creator_revision;
-} __PACKED SDTHeader_t;
+} __PACKED;
+typedef struct SDTHeader_struct SDTHeader_t;
 /**
 * Root System Descriptor table
 */
-typedef struct {
+struct RSDT_struct {
 	SDTHeader_t h;					// Standard ACPI header
 	uint32 ptr;						// This actually is an array, we're using only first entry
-} __PACKED RSDT_t;
+} __PACKED;
+typedef struct RSDT_struct RSDT_t;
 /**
 * eXtended System Descriptor Table
 */
-typedef struct {
+struct XSDT_struct {
 	SDTHeader_t h;					// Standard ACPI header
 	uint64 ptr;						// This actually is an array, we're using only first entry
-} __PACKED XSDT_t;
+} __PACKED; 
+typedef struct XSDT_struct XSDT_t;
 /**
 * Secondary System Descriptor table
 */
-typedef struct {
+struct SSDT_struct {
 	SDTHeader_t h;					// Standard ACPI header
 	uint8 ptr;						// AML bytecode
-} __PACKED SSDT_t;
+} __PACKED;
+typedef struct SSDT_struct SSDT_t;
 /**
 * Differentiated System Descriptor table
 */
-typedef struct {
+struct DSDT_struct {
 	SDTHeader_t h;					// Standard ACPI header
 	uint8 ptr;						// AML bytecode
-} __PACKED DSDT_t;
+} __PACKED;
+typedef struct DSDT_struct DSDT_t;
 /**
 * Firmware ACPI Control Structure
 */
-typedef struct {
+struct FACS_struct {
 	char signature[4];
 	uint32 length;
 	uint32 hw_signature;
@@ -114,21 +120,23 @@ typedef struct {
 	uint8 reserved[3];
 	uint32 ospm_flags;
 	uint8 reserved2[24];
-} __PACKED FACS_t;
+} __PACKED;
+typedef struct FACS_struct FACS_t;
 /**
 * Generic Address structure
 */
-typedef struct {
+struct GAS_struct {
 	uint8 address_space;
 	uint8 bit_width;
 	uint8 bit_offset;
 	uint8 access_size;
 	uint64 address;
-} __PACKED GAS_t;
+} __PACKED;
+typedef struct GAS_struct GAS_t;
 /**
 * Fixed ACPI Description Table structure
 */
-typedef struct {
+struct FADT_struct {
 	SDTHeader_t h;					// Standard ACPI header
 	FACS_t *firmware_ctrl;			// Pointer to FACS table
 	DSDT_t *dsdt;					// Pointer to DSDT table
@@ -193,59 +201,66 @@ typedef struct {
 	GAS_t x_pm_timer_block;
 	GAS_t x_gpe0_block;
 	GAS_t x_gpe1_block;
-} __PACKED FADT_t;
+} __PACKED;
+typedef struct FADT_struct FADT_t;
 /**
 * Multiple APIC Description Table structure
 */
-typedef struct {
+struct MADT_struct {
 	SDTHeader_t h;
 	uint32 lapic_add;			// Physical address of local APIC
 	uint32 flags;				// Flags
 	uint32 ptr;					// Local, IO and other APIC structures (we use it as an offset)
-} __PACKED MADT_t;
+} __PACKED;
+typedef struct MADT_struct MADT_t;
 /**
 * ACPI APIC structure header
 */
-typedef struct {
+struct APICHeader_struct {
 	uint8 type;
 	uint8 length;
-} __PACKED APICHeader_t;
+} __PACKED;
+typedef struct APICHeader_struct APICHeader_t;
 /**
 * Local APIC structure
 */
-typedef struct {
+struct LocalAPIC_struct {
 	APICHeader_t h;
 	uint8 processor_id;
 	uint8 apic_id;
 	uint32 flags;
-} __PACKED LocalAPIC_t;
+} __PACKED;
+typedef struct LocalAPIC_struct LocalAPIC_t;
 /**
 * I/O APIC strcuture
 */
-typedef struct {
+struct IOAPIC_struct {
 	APICHeader_t h;
 	uint8 apic_id;
 	uint8 reserved;
 	uint32 apic_addr;
 	uint32 gsi_base;
-} __PACKED IOAPIC_t;
+} __PACKED;
+typedef struct IOAPIC_struct IOAPIC_t;
 /**
 * Non Maskable Interrupt (NMI) structure
 */
-typedef struct {
+struct NMI_struct {
 	APICHeader_t h;
 	uint16 flags;
 	uint32 gsi;
-} __PACKED NMI_t;
+} __PACKED;
+typedef struct NMI_struct NMI_t;
 /**
 * Local APIC structure
 */
-typedef struct {
+struct LocalNMI_struct {
 	APICHeader_t h;
 	uint8 processor_id;
 	uint16 flags;
 	uint8 lint;
-} __PACKED LocalNMI_t;
+} __PACKED;
+typedef struct LocalNMI_struct LocalNMI_t;
 
 /**
 * Scan through memory and locate RSDP.

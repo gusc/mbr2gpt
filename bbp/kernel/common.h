@@ -52,6 +52,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __PACKED	__attribute__((packed))
 #define __ALIGN(x)	__attribute__((aligned(x)))
 
+#define BREAK() asm volatile ("xchg %bx, %bx")
+#define HANG() while(true){}
+
 // Default types
 typedef unsigned char	uchar;
 
@@ -68,5 +71,6 @@ typedef long long		int64;
 #define null 0
 #define true 1
 #define false 0
+#define bool uint64
 
 #endif /* __common_h */

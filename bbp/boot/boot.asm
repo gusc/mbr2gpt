@@ -112,7 +112,7 @@ start32:										; Protected mode entry point
 	mov eax, cr4								; read from CR4
 	or eax, 0x000000A0							; set the PAE and PGE bit
 	mov cr4, eax								; write to CR4
-	mov edx, [pml4_ptr]							; point edx to PML4 pointer location
+	mov edx, [pml4_ptr32]						; point edx to PML4 pointer location
 	mov cr3, edx								; save this into CR3
 	mov ecx, 0xC0000080							; read from the EFER MSR
 	rdmsr										; read MSR
@@ -130,7 +130,6 @@ start32:										; Protected mode entry point
 
 start64:										; Long Mode entry point
 	; Register cleanup
-	xchg bx, bx
 	xor rax, rax								; aka r0
 	xor rbx, rbx								; aka r1
 	xor rcx, rcx								; aka r2
@@ -162,12 +161,7 @@ start64:										; Long Mode entry point
 
 [global idt]									; Make IDT accessible from C
 [global idt_ptr]								; Make IDT pointer accessible from C
-[global pml4_ptr]								; Make PML4 pointer accessible from C
-
-; Interrupt Descriptor Table (IDT)
-idt:
-	times (64 * 256) db 0						; Dummy entries - we'll populate them kmain
-idt_end:
+[global pml4_ptr32]								; Make PML4 pointer accessible from C
 
 ; IDT pointer (zero-pointer)
 idt_ptr:
@@ -175,10 +169,10 @@ idt_ptr:
 	dd 0										; Base (location)
 idt_ptr_end:
 
-; PML4 pointer
-pml4_ptr:
+; PML4 pointer (for 32bit CR3)
+pml4_ptr32:
 	dd 0										; Dummy entry - we'll populate it in main32 and later in kmain
-pml4_ptr_end:
+pml4_ptr32_end:
 
 [section .rodata]
 
@@ -234,7 +228,9 @@ gdt64:
 	dw 0xffff									; 0:15 - Limit
 	dw 0x0000									; 16:31 - Base (low word)
 	db 0x00										; 32:39 - Base (high word low byte)
-	db 10011000b								; 40:47 - Access byte
+	;  P|DPL|DPL|1|1|C|R|A
+	db 10011100b								; 40:47 - Access byte
+	;  G|D|L|AVL|0|0|0|0
 	db 00100000b								; 48:55 - Limit (high nibble) + Flags (4 bits) 
 	db 0x00										; 56:64 - Base (high word high byte)
 
@@ -244,7 +240,7 @@ gdt64:
 	dw 0x0000									; 16:31 - Base (low word)
 	db 0x00										; 32:39 - Base (high word low byte)
 	db 10010000b								; 40:47 - Access byte
-	db 00000000b								; 48:55 - Limit (high nibble) + Flags (4 bits) 
+	db 00100000b								; 48:55 - Limit (high nibble) + Flags (4 bits) 
 	db 0x00										; 56:64 - Base (high word high byte)
 gdt64_end:
 

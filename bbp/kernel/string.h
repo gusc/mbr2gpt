@@ -47,13 +47,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * @param len - destination buffer length
 * @return number of characters copied
 */
-uint32 str_copy(const char *src, char *dest, uint32 len);
+uint32 str_copy(const char *src, char *dest, uint64 len);
 /**
 * Calculate the length of a string
 * @param [in] src - source buffer
 * @return string length
 */
-uint32 str_len(const char *src);
+uint64 str_len(const char *src);
 /**
 * Search for a character in a string
 * @param [in] haystack - source buffer
@@ -61,7 +61,7 @@ uint32 str_len(const char *src);
 * @param offset - number of characters to offset from the beginning of haystack
 * @return character index (-1 if not found)
 */
-int32 str_char_pos(const char *haystack, const char needle, uint32 offset);
+int64 str_char_pos(const char *haystack, const char needle, uint64 offset);
 /**
 * Convert integer to string
 * @param in - input integer
@@ -69,13 +69,13 @@ int32 str_char_pos(const char *haystack, const char needle, uint32 offset);
 * @param len - destination buffer length
 * @return number of characters in a string representation
 */
-uint32 int_to_str(int32 in, char *dest, uint32 len);
+uint64 int_to_str(int64 in, char *dest, uint64 len);
 /**
 * Convert a string to integer
 * @param [in] src - source buffer
 * @return output integer
 */
-int32 str_to_int(const char *src);
+int64 str_to_int(const char *src);
 
 
 #endif

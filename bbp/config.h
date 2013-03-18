@@ -50,6 +50,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VIDEOMODE 1 
 // Enable debug output
 #define DEBUG 1
+// Initial number of page tables (128 = 256MB of RAM)
+#define PT_COUNT 128
 
 //
 // Hard-coded memory locations

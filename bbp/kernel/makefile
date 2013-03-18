@@ -1,7 +1,7 @@
 AS = nasm -felf64
 CC = x86_64-pc-elf-gcc -nostdlib -fno-builtin -nostartfiles -nodefaultlibs
 LD = x86_64-pc-elf-ld -i
-OBJECTS = memory.c.o screen.c.o string.c.o kmain.c.o
+OBJECTS = memory.c.o screen.c.o string.c.o interrupts.s.o acpi.c.o kmain.c.o
 
 all: kernel.o
 

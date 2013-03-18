@@ -44,10 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../config.h"
 
 /**
-* Current memory map
-*/
-e820map_t *mem_map = (e820map_t *)E820_LOC;
-/**
 * Set video mode
 * @see bios.asm
 * @param mode - BIOS video mode
@@ -75,7 +71,7 @@ extern uint32 read_e820(e820map_t *mem_map);
 * Filter out memory map of unusable regions
 * and sort them in ascending order
 */
-static void filter_e820(){
+static void filter_e820(e820map_t *mem_map){
 	uint16 i = 0;
 	// Filter out unusuable regions
 	while (i < mem_map->size){
@@ -113,6 +109,7 @@ static void filter_e820(){
 * Initialize Real Mode
 */
 void main16(){
+	e820map_t *mem_map = (e820map_t *)E820_LOC;
 #if VIDEOMODE == 1
 	set_video_mode(0x03); // Teletype
 #elif VIDEOMODE == 2
@@ -123,7 +120,7 @@ void main16(){
 	// Read E820 map
 	if (read_e820(mem_map)){
 		// Process E820 map
-		filter_e820();
+		filter_e820(mem_map);
 	} else {
 		HANG();
 	}	

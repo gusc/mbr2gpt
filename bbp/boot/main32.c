@@ -43,25 +43,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../config.h"
 
 /**
-* Current memory map
-*/
-//static e820map_t *mem_map = (e820map_t *)E820_LOC;
-/**
 * Page table structures
 */
-// @ D000
 static pm_t pml4[512] __ALIGN(4096); // a.k.a. PML4T
-// @ E000
 static pm_t pml3[512] __ALIGN(4096); // a.k.a. PTD (page directory table)
-// @ F000
 static pm_t pml2[512] __ALIGN(4096); // a.k.a. PD (page directory)
-// @ 10000
-static pm_t pml1[8][512] __ALIGN(4096); // a.k.a. PT (page table), and it will map 0-16Mb (each PT can map 2Mb, thus we need 8 tables)
+static pm_t pml1[PT_COUNT][512] __ALIGN(4096); // a.k.a. PT (page table), and it will map 0-256MB (each PT can map 2MB, thus we need 128 tables)
 /**
 * PML4 pointer (to be passed over to CR3)
 * @see boot16.asm
 */
-extern uint32 pml4_ptr;
+extern uint32 pml4_ptr32;
 /**
 * Set value in memory
 * @param val - the value to set
@@ -88,33 +80,33 @@ static void setup_pages(){
 	mem_set(0, (uint8 *)&pml3, sizeof(pm_t) * 512);
 	mem_set(0, (uint8 *)&pml2, sizeof(pm_t) * 512);
 	mem_set(0, (uint8 *)&pml1, sizeof(pm_t) * 8 * 512);
-	// Each PT is used for 4Mb, and we'll identity-map all the first 16Mb for kernel
-	for (t = 0; t < 8; t ++){
+	// Each PT is used for 2MB, and we'll identity-map all the first 256MB for kernel
+	for (t = 0; t < PT_COUNT; t ++){
 		// Create the identity map (virtual address = physical address)
 		for (i = 0; i < 512; i ++){
-			pml1[t][i].val = ((t * 2097152) + (i * 4096)) & PAGE_MASK;
+			pml1[t][i].raw = ((t * 2097152) + (i * 4096)) & PAGE_MASK;
 			pml1[t][i].s.present = 1;
 			pml1[t][i].s.writable = 1;
 		}
 		// Point PML2 entries to PML1 tables
-		ptr = ((uint64)&pml1) + (t * 4096);
-		pml2[t].val = ptr & PAGE_MASK;
+		ptr = ((uint64)((uint32)&pml1)) + (t * 4096);
+		pml2[t].raw = ptr & PAGE_MASK;
 		pml2[t].s.present = 1;
 		pml2[t].s.writable = 1;
 		
 	}
 	// Point first PML3 entry to PML2 table
-	ptr = (uint64)&pml2;
-	pml3[0].val = ptr & PAGE_MASK;
+	ptr = (uint64)((uint32)&pml2);
+	pml3[0].raw = ptr & PAGE_MASK;
 	pml3[0].s.present = 1;
 	pml3[0].s.writable = 1;
 	// Point first PML4 entry to PML3 table
-	ptr = (uint64)&pml3;
-	pml4[0].val = ptr & PAGE_MASK;
+	ptr = (uint64)((uint32)&pml3);
+	pml4[0].raw = ptr & PAGE_MASK;
 	pml4[0].s.present = 1;
 	pml4[0].s.writable = 1;
 	// Set PML4 pointer address
-	pml4_ptr = (uint32)&pml4;
+	pml4_ptr32 = (uint32)&pml4;
 }
 
 /**

@@ -40,4 +40,56 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.h"
 
+/**
+* Memory type codes for E820
+*/
+enum eMemType {
+	kMemOk = 1,			// Normal memory - usable
+	kMemReserved,		// Reserved memory - unusable
+	kMemACPIReclaim,	// ACPI reclaimable memory - might be usable after ACPI is taken care of
+	kMemACPI,			// ACPI NVS memory - unusable
+	kMemBad				// Bad memory - unsuable
+};
+/**
+* E820 memory map entry structure
+*/
+struct e820entry_struct {
+	uint16 entry_size;	// if 24, then it has attributes
+	uint64 base;
+	uint64 length;
+	uint32 type;
+	uint32 attributes;	// ACPI 3.0 only
+} __PACKED;
+typedef struct e820entry_struct e820entry_t;
+/**
+* E820 memory map structure
+*/
+struct e820map_struct {
+	uint16 size;
+	e820entry_t entries[];
+} __PACKED;
+typedef struct e820map_struct e820map_t;
+
+/**
+* 32-bit page table/directory/level3/level4 entry structure
+*/
+typedef union {
+	uint64 raw;							// Raw value
+	struct {
+		uint64 present			: 1;	// Is the page present in memory?
+		uint64 writable			: 1;	// Is the page writable?
+		uint64 user				: 1;	// Is the page for userspace?
+		uint64 write_through	: 1;	// Do we want write-trough? (when cached, this also writes to memory)
+		uint64 cache_disable	: 1;	// Disable cache on this page?
+		uint64 accessed			: 1;	// Has the page been accessed by software?
+		uint64 dirty			: 1;	// Has the page been written to since last refresh?
+		uint64 pat				: 1;	// Is the page a PAT? (dunno what it is)
+		uint64 global			: 1;	// Is the page global? (dunno what it is)
+		uint64 data				: 3;	// Available for kernel use (do what you want?)
+		uint64 frame			: 52;	// Frame address (shifted right 12 bits)
+	} s;
+} pm_t;
+
+#define PAGE_MASK		0xFFFFFFFFFFFFF000;
+
 #endif /* __kmain_h */

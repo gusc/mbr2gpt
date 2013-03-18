@@ -6,7 +6,7 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.innotek.de/VirtualBox-settings" version="1.12-windows">
-  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-02-06T20:29:12Z">
+  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-03-18T12:04:23Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa}" location="Disk.vmdk" format="VMDK" type="Normal"/>
@@ -17,7 +17,7 @@
     <ExtraData>
       <ExtraDataItem name="GUI/LastCloseAction" value="powerOff"/>
       <ExtraDataItem name="GUI/LastGuestSizeHint" value="720,400"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="379,105,640,522"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="514,311,720,439"/>
     </ExtraData>
     <Hardware version="2">
       <CPU count="1" hotplug="false">
@@ -140,7 +140,7 @@
       </EmulatedUSB>
       <Guest memoryBalloonSize="0"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="C" timestamp="1360182543726654200" flags=""/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1363608250296875001" flags=""/>
       </GuestProperties>
     </Hardware>
     <StorageControllers>

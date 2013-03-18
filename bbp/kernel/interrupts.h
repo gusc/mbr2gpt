@@ -1,10 +1,11 @@
 /*
 
 Helper functions for operations interrupts
-=============================================================
+==========================================
 
 This contains imports from ASM stub subroutines that catch all the neccessary
-exception interrupts
+exception interrupts and calls a C function interrupt_handler().
+It also contains LIDT wrapper function.
 
 License (BSD-3)
 ===============
@@ -63,23 +64,71 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * Register stack passed from assembly
 */
 typedef struct {
-	uint32 ds;										// Data segment selector
-	uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax;	// Pushed by pusha.
-	uint32 int_no, err_code;						// Interrupt number and error code (if applicable)
-	uint32 eip, cs, eflags, useresp, ss;			// Pushed by the processor automatically.
-} registers_t;
+	uint64 int_no;				// Interrupt number
+	uint64 err_code;			// Error code (or IRQ number for IRQs)
+	uint64 rip;					// Return instruction pointer
+	uint64 cs;					// Code segment
+	uint64 rflags;				// RFLAGS
+	uint64 rsp;					// Previous stack pointer
+	uint64 ss;					// Stack segment
+} int_stack_t;
+/**
+* Interrupt Descriptor Table (IDT) entry structure
+*/
+struct idt_entry_struct {
+	uint16 offset_lo;			// The lower 16 bits of 32bit address to jump to when this interrupt fires
+	uint16 segment;				// Kernel segment selector
+	union {
+		uint16 raw;				// Raw value
+		struct {				// IDT flag structure
+			uint16 ist		:3;	// Interrupt stack table
+			uint16 res1		:5;	// This must be zero
+			uint16 type		:4;	// Interrupt gate, trap gate, task gate, etc.
+			uint16 res2		:1;	// This must be zero
+			uint16 dpl		:2;	// Descriptor privilege level
+			uint16 present	:1;	// Present flag
+		} s;
+	} flags;
+	uint16 offset_hi;			// The upper 16 bits of 32bit address to jump to
+	uint32 offset_64;			// The upper 32 bits of 64bit address
+	uint32 reserved;			// Reserved for 96bit systems :)
+} __PACKED;
+/**
+* Interrupt Descriptor Table (IDT) entry
+*/
+typedef struct idt_entry_struct idt_entry_t;
+/**
+* Interrupt Descriptor Table (IDT) pointer structure
+*/
+struct idt_ptr_struct {
+	uint16 limit;
+	uint64 base;				// The address of the first element in our idt_entry_t array.
+} __PACKED;
+/**
+* Interrupt Descriptor Table (IDT) pointer
+*/
+typedef struct idt_ptr_struct idt_ptr_t;
+/**
+* Set IDT pointer
+* @see interrupts.asm
+* @param idt_ptr - an address of IDT pointer structure in memory
+* @return void
+*/
+extern void idt_set(idt_ptr_t *idt_ptr);
 /**
 * Interrupt Service Routine (ISR) handler
+* This will be defined in kernel code
 * @param regs - registers pushed on the stack by assembly
 * @return void
 */
-void isr_handler(registers_t regs);
+void isr_handler(int_stack_t regs);
 /**
 * Interrupt Request (IRQ) handler
+* This will be defined in kernel code
 * @param regs - registers pushed on the stack by assembly
 * @return void
 */
-void irq_handler(registers_t regs);
+void irq_handler(int_stack_t regs);
 
 // Defined in interrupts.asm (with macros!)
 extern void isr0();
