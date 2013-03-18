@@ -45,10 +45,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
 * Page table structures
 */
-static pm_t pml4[512] __ALIGN(4096); // a.k.a. PML4T
-static pm_t pml3[512] __ALIGN(4096); // a.k.a. PTD (page directory table)
-static pm_t pml2[512] __ALIGN(4096); // a.k.a. PD (page directory)
-static pm_t pml1[PT_COUNT][512] __ALIGN(4096); // a.k.a. PT (page table), and it will map 0-256MB (each PT can map 2MB, thus we need 128 tables)
+static pm_t *pml4; // a.k.a. PML4T
+static pm_t *pml3; // a.k.a. PTD (page directory table)
+static pm_t *pml2; // a.k.a. PD (page directory)
+static pm_t *pml1; // a.k.a. PT (page table)
 /**
 * PML4 pointer (to be passed over to CR3)
 * @see boot16.asm
@@ -66,53 +66,131 @@ static void mem_set(uint8 val, uint8 *dest, uint16 len){
 	}
 }
 /**
-* Setup PML4 pages to enter Long Mode
+* Filter out memory map of unusable regions
+* and sort them in ascending order
 */
-static void setup_pages(){
-	/**
-	* Page mapping structures
-	*/
-	uint32 t;
-	uint32 i;
-	uint64 ptr;
-	// Clear memory region where the page tables will reside
-	mem_set(0, (uint8 *)&pml4, sizeof(pm_t) * 512);
-	mem_set(0, (uint8 *)&pml3, sizeof(pm_t) * 512);
-	mem_set(0, (uint8 *)&pml2, sizeof(pm_t) * 512);
-	mem_set(0, (uint8 *)&pml1, sizeof(pm_t) * 8 * 512);
-	// Each PT is used for 2MB, and we'll identity-map all the first 256MB for kernel
-	for (t = 0; t < PT_COUNT; t ++){
-		// Create the identity map (virtual address = physical address)
-		for (i = 0; i < 512; i ++){
-			pml1[t][i].raw = ((t * 2097152) + (i * 4096)) & PAGE_MASK;
-			pml1[t][i].s.present = 1;
-			pml1[t][i].s.writable = 1;
+static void sort_e820(e820map_t *mem_map){
+	uint16 i = 0;
+	// Do the bubble sort to make them in ascending order
+	e820entry_t e;
+	uint16 swapped  = 1;
+	uint16 count = mem_map->size;
+	while (count > 0 && swapped ){
+		i = 0;
+		swapped  = 0;
+		while (i < count - 1){
+			if (mem_map->entries[i].base > mem_map->entries[i + 1].base){
+				e = mem_map->entries[i];
+				mem_map->entries[i] = mem_map->entries[i + 1];
+				mem_map->entries[i + 1] = e;
+				swapped  = 1;
+			}
+			i ++;
 		}
-		// Point PML2 entries to PML1 tables
-		ptr = ((uint64)((uint32)&pml1)) + (t * 4096);
+		count --;
+	}
+}
+/**
+* Get total available RAM
+* @param mem_map - memory map structure
+* @return total available memory in bytes
+*/
+static uint64 get_ram(e820map_t *mem_map){
+	uint16 i;
+	uint64 mem_size = 0;
+	for (i = 0; i < mem_map->size; i ++){
+		if (mem_map->entries[i].base + mem_map->entries[i].length > mem_size){
+			mem_size = mem_map->entries[i].base + mem_map->entries[i].length;
+		}
+	}
+	return mem_size;
+}
+/**
+* Setup PML4 pages to enter Long Mode
+* @param ammount - ammount of memory to map
+*/
+static void setup_pages(uint64 ammount){
+	uint64 d;
+	uint64 t;
+	uint64 p;
+	uint64 ptr;
+	
+	// Single page holds 4KB of RAM
+	uint64 page_count = ammount / 4096;
+	if (page_count % 4096 > 0){
+		page_count ++;
+	}
+	// Single table entry holds 2MB of RAM
+	uint64 table_count = page_count / 512;
+	if (page_count % 512 > 0){
+		table_count ++;
+	}
+	// Single directory entry holds 1GB of RAM
+	uint64 dir_count = table_count / 512;
+	if (table_count % 512 > 0){
+		dir_count ++;
+	}
+
+	// To map 2GB of RAM you'll need
+	// 524288 - page entries
+	// 1024 - table entries
+	// 2 - directory entries
+	// Single PML4 entry is enough to map 512GB of RAM
+
+	// To map 256MB of RAM
+	// 65536 - page entries
+	// 128 - table entries
+	// 1 - directory entry
+
+	// Position the page structures in memory
+	pml4 = (pm_t*)PT_LOC; // @0x00100000
+	pml3 = (pm_t*)(((uint32)pml4) + (sizeof(pm_t) * 512)); // @0x00101000
+	pml2 = (pm_t*)(((uint32)pml3) + (sizeof(pm_t) * 512)); // @0x00102000
+	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * dir_count)); // @0x00103000
+	
+	// Clear memory region where the page tables will reside
+	mem_set(0, (uint8 *)pml4, sizeof(pm_t) * 512);
+	mem_set(0, (uint8 *)pml3, sizeof(pm_t) * 512);
+	mem_set(0, (uint8 *)pml2, sizeof(pm_t) * 512 * dir_count);
+	mem_set(0, (uint8 *)pml1, sizeof(pm_t) * 512 * table_count);
+
+	// Set up pages, tables and directories
+	for (p = 0; p < page_count; p ++){
+		pml1[p].raw = (p * 4096) & PAGE_MASK;
+		pml1[p].s.present = 1;
+		pml1[p].s.writable = 1;
+	}
+	for (t = 0; t < table_count; t ++){
+		ptr = (uint64)(((uint32)pml1) + (sizeof(pm_t) * 512 * t));
 		pml2[t].raw = ptr & PAGE_MASK;
 		pml2[t].s.present = 1;
 		pml2[t].s.writable = 1;
-		
 	}
-	// Point first PML3 entry to PML2 table
-	ptr = (uint64)((uint32)&pml2);
-	pml3[0].raw = ptr & PAGE_MASK;
-	pml3[0].s.present = 1;
-	pml3[0].s.writable = 1;
+	for (d = 0; d < dir_count; d ++){
+		ptr = (uint64)(((uint32)pml2) + (sizeof(pm_t) * 512 * d));
+		pml3[d].raw = ptr & PAGE_MASK;
+		pml3[d].s.present = 1;
+		pml3[d].s.writable = 1;
+	}
 	// Point first PML4 entry to PML3 table
-	ptr = (uint64)((uint32)&pml3);
+	ptr = (uint64)((uint32)pml3);
 	pml4[0].raw = ptr & PAGE_MASK;
 	pml4[0].s.present = 1;
 	pml4[0].s.writable = 1;
+	
 	// Set PML4 pointer address
-	pml4_ptr32 = (uint32)&pml4;
+	pml4_ptr32 = (uint32)pml4;
 }
 
 /**
 * Initialize Protected Mode
 */
 void main32(){
+	e820map_t *mem_map = (e820map_t *)E820_LOC;
+	// Sort memory map
+	sort_e820(mem_map);
+	// Get total available ram
+	uint64 ram_total = get_ram(mem_map);
 	// Setup Page tables
-	setup_pages();
+	setup_pages(ram_total);
 }

@@ -55,7 +55,7 @@ static uint8 acpi_checksum(uint8 *block, uint64 len){
 RSDP_t *acpi_find(){
 	const char sign[9] = "RSD PTR ";
 	if (rsdp == null){
-		rsdp = (RSDP_t *)0x80000; // We start at the beginning of RAM
+		rsdp = (RSDP_t *)0x80000; // We start at the beginning of EBDA
 		do {
 			if (mem_cmp((uint8 *)rsdp->signature, (uint8 *)sign, 8)){
 				if (rsdp->revision == 0){

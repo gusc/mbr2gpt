@@ -81,43 +81,40 @@ read_e820:										; Read E820 Memory map
 												; on the stack are the old base pointer and
 												; old instruction pointer + 2 more bytes, as GCC pushes 32bit values on the stack)
 	add bp, 2									; if using .code16gcc add 2 more bytes, as GCC pushes 32bit values on the stack
+	
 	mov di, word [bp]							; set DI to location where we'll read E820 map (a pointer argument from C)
-	add di, 2									; move di to entry table location in E820 map
-	mov eax, 0x0000E820							; command: E820 map
+	add di, 4									; first word is reserved for array size
+												; second word is the size of the size of the first entry
+													
+	xor eax, eax								; initially we have no entries in the table
+	push ax										; store current count on the stack
 	xor ebx, ebx								; clear ebx
-	mov ecx, 0x18								; set ECX to value of 24 - the max size of entry (only ACPI 3.0 has 24 byte entries)
-	mov edx, 0x534D4150							; set EDX to magic number
-	int 0x15									; call memory interrupt?
-	jc .end_fail								; if carry flag set, then we failed
-	cmp eax, 0x534D4150							; should be the magic number, is it?
-	jne .end_fail								; if magic number is not set, then we failed
-	push 1										; store entry count on the stack
+	
 .read_more:
-	cmp ebx, 0x0								; test EBX for 0
-	je .end_ok									; if EBX is 0, this was the last entry
-	pop ax										; get entry count from the stack
-	inc ax										; increment entry count on the stack
-	push ax										; store entry count on the stack
-	mov [di - 2], cx							; save entry size
-	add di, cx									; increment DI by entry size
-	add di, 2									; increment DI by entry size offset (word size)
 	mov eax, 0x0000E820							; command: E820 map
-	int 0x15									; call memory interrupt?
-	jc .end_ok									; if carry flag set, then we failed
+	mov ecx, 0x18								; set ECX to value of 24 - the max size of entry (only ACPI 3.0 has 24 byte entries)
+	mov edx, 0x534D4150							; set EDX to magic number "SMAP"
+	
+	int 0x15									; call memory interrupt
+	jc .end										; if carry flag set, then we failed
+	cmp eax, 0x534D4150							; should be the magic number "SMAP", is it?
+	jne .end									; if magic number is not set, then we failed
+	
+	cmp ebx, 0x0								; test EBX for 0
+	je .end										; if EBX is 0, this was the last entry
+	
+	pop ax										; pop array size from the stack
+	inc ax										; increment it by 1
+	push ax										; push it back on the stack
+	
+	mov [di - 2], cx							; save entry size
+	add di, 0x1A								; increment DI by 26
+	
 	jmp .read_more								; read some more
 
-.end_fail:
+.end:
 	pop ax										; get entry count
-	xor eax, eax								; clear EAX (also status code - failed)
-	mov [bp], ax								; no entries on E820 map
-	jmp .return									; proceed to funciton exit
-
-.end_ok:
-	pop ax										; get entry count
-	mov [bp], ax								; save entry count before our memory structure
-	mov eax, 1									; status code - ok
-	jmp .return									; proceed to funciton exit
-
-.return:
+	mov di, [bp]								; move back to the beginning of the array
+	mov [di], ax								; no entries on E820 map
 	pop bp										; restore the old base pointer
 	ret											; return to callee

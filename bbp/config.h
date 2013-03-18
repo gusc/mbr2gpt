@@ -50,8 +50,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VIDEOMODE 1 
 // Enable debug output
 #define DEBUG 1
-// Initial number of page tables (128 = 256MB of RAM)
-#define PT_COUNT 128
+// Memory location where to store PMLx page tables
+#define PT_LOC 0x00100000
 
 //
 // Hard-coded memory locations
@@ -59,8 +59,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // E820 memory map location
 #define E820_LOC 0x0800
-// Page table location
-#define PT_LOC 0x1000
 // Teletype video memory location
 // This can be used only in 32+ bit modes
 #define VIDEOTXT_LOC 0xB8000

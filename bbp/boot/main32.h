@@ -77,6 +77,7 @@ typedef struct e820map_struct e820map_t;
 /**
 * 32-bit page table/directory/level3/level4 entry structure
 */
+
 typedef union {
 	uint64 raw;							// Raw value
 	struct {

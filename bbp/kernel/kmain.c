@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "kmain.h"
+#include "../config.h"
 #include "screen.h"
 #include "memory.h"
 #include "string.h"
@@ -54,13 +55,6 @@ idt_entry_t idt[256];
 * Interrupt Descriptor Table pointer
 */
 idt_ptr_t idt_ptr;
-/**
-* Page table structures
-*/
-//static pm_t pml4[512] __ALIGN(4096); // a.k.a. PML4T
-//static pm_t pml3[512] __ALIGN(4096); // a.k.a. PTD (page directory table)
-//static pm_t pml2[512] __ALIGN(4096); // a.k.a. PD (page directory)
-//static pm_t pml1[8][512] __ALIGN(4096); // a.k.a. PT (page table), and it will map 0-16Mb (each PT can map 2Mb, thus we need 8 tables)
 /**
 * Initialize all the interrupts
 * @return void
@@ -109,83 +103,52 @@ void kmain(){
 	// Initialize ACPI
 	acpi_init();
 	// Test interrupt exception: division by zero
-	uint32 a = 1;
-	uint32 b = 0;
-	uint32 c = a / b;
+	//uint32 a = 1;
+	//uint32 b = 0;
+	//uint32 c = a / b;
 	// Infinite loop
 	while(true){}
 }
 
 static void acpi_init(){
 	RSDP_t *rsdp = acpi_find();
-	screen_print_int((uint64)rsdp, 0x07, sx, sy++);
-  
 	if (rsdp != null){
-		SDTHeader_t *th;
-		char sign[5] = "";
-		uint32 i;
-		uint32 count;
-		screen_print_int((uint32)rsdp->revision, 0x07, sx, sy++);
-		if (rsdp->revision == 0){
-			// ACPI revision 1.0
-			RSDT_t *rsdt = (RSDT_t *)((uint64)rsdp->RSDT_address);
-			uint64 ptr;
-			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
-			for (i = 0; i < count; i ++){
-				// Get an address of table pointer array
-				ptr = (uint64)&rsdt->ptr;
-				// Move on to entry i (32bits = 4 bytes) in table pointer array
-				ptr += (i * 4);
-				// Get the pointer of table in table pointer array
-				th = (SDTHeader_t *)((uint64)(*((uint32 *)ptr)));
-				mem_set(0, (uint8 *)sign, 5);
-				mem_copy((uint8 *)th->signature, (uint8 *)sign, 4);
-				screen_print_str(sign, 0x07, 0, sy++);
-			}
-		} else {
-			// ACPI revision 2.0+
-			screen_print_int((uint64)rsdp->XSDT_address, 0x07, sx, sy++);
-			XSDT_t *xsdt = (XSDT_t *)(rsdp->XSDT_address);
-			uint64 ptr;
-			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 8;
-			for (i = 0; i < count; i ++){
-				// Get an address of table pointer array
-				ptr = (uint64)&xsdt->ptr;
-				// Move on to entry i (64bits = 8 bytes) in table pointer array
-				ptr += (i * 8);
-				// Get the pointer of table in table pointer array
-				th = (SDTHeader_t *)(*((uint64 *)ptr));
-				mem_set(0, (uint8 *)sign, 5);
-				mem_copy((uint8 *)th->signature, (uint8 *)sign, 4);
-				screen_print_str(sign, 0x07, 0, sy++);
-			}
-		}
-		
-		char apic[4] = {'A', 'P', 'I', 'C'};
-		MADT_t *madt = (MADT_t *)acpi_table(apic);
-		screen_print_int((uint64)madt, 0x07, sx, sy++);
-		if (madt != null){
-			screen_print_str("found MADT", 0x07, sx, sy++);
-		}
-
+		screen_print_str("RSDP @", 0x07, sx, sy);
+		screen_print_int((uint64)rsdp, 0x07, sx + 6, sy++);
+  
 		char facp[4] = {'F', 'A', 'C', 'P'};
 		FADT_t *fadt = (FADT_t *)acpi_table(facp);
-		screen_print_int((uint64)fadt, 0x07, sx, sy++);
 		if (fadt != null){
-			screen_print_str("found FADT", 0x07, sx, sy++);
+			screen_print_str("FADT @", 0x07, sx, sy);
+			screen_print_int((uint64)fadt, 0x05, sx + 6, sy++);
+			screen_print_str("SMI port:", 0x07, sx, sy);
+			screen_print_int(fadt->smi_command_port, 0x05, sx +10, sy++);
+			screen_print_str("ACPI enb:", 0x07, sx, sy);
+			screen_print_int(fadt->acpi_enable, 0x05, sx +10, sy++);
+			screen_print_str("ACPI dis:", 0x07, sx, sy);
+			screen_print_int(fadt->acpi_disable, 0x05, sx +10, sy++);
+			/*
 			DSDT_t *dsdt = fadt->dsdt;
 			screen_print_int((uint64)dsdt, 0x07, sx, sy++);
-			screen_print_str("found DSDT", 0x07, sx, sy++);
+			screen_print_str("DSDT", 0x07, sx, sy++);
 			FACS_t *facs = fadt->firmware_ctrl;
 			screen_print_int((uint64)facs, 0x07, sx, sy++);
-			screen_print_str("found FACS", 0x07, sx, sy++);
+			screen_print_str("FACS", 0x07, sx, sy++);
+			*/
 		}
 
+		char apic[4] = {'A', 'P', 'I', 'C'};
+		MADT_t *madt = (MADT_t *)acpi_table(apic);
+		if (madt != null){
+			screen_print_str("MADT @", 0x07, sx, sy);
+			screen_print_int((uint64)madt, 0x05, sx + 6, sy++);
+		}
+		
 		char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
 		SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
-		screen_print_int((uint64)ssdt, 0x07, sx, sy++);
 		if (ssdt != null){
-			screen_print_str("found SSDT", 0x07, sx, sy++);
+			screen_print_str("SSDT @", 0x07, sx, sy);
+			screen_print_int((uint64)ssdt, 0x05, sx + 6, sy++);
 		}
 		
 	}
@@ -273,14 +236,6 @@ void isr_handler(int_stack_t stack){
 	char msg[80] = "Interrupt ";
 	if (stack.int_no < 19){
 		str_copy(ints[stack.int_no], msg, 40);
-		switch (stack.int_no){
-			case 0: // Division by zero
-				stack.rip++; // it's ok to divide by zero - move to next instruction :P
-				break;
-			case 14: // Page fault
-				// Do something!
-				break;
-		}
 	} else {
 		char *m = &msg[10];
 		uint32 len = int_to_str(stack.int_no, m, 20);
@@ -289,6 +244,17 @@ void isr_handler(int_stack_t stack){
 		int_to_str(stack.err_code, m, 20);
 	}
 	screen_print_str(msg, 0x08, sx, sy++);
+	// Process some exceptions here
+	switch (stack.int_no){
+		case 0: // Division by zero
+			stack.rip++; // it's ok to divide by zero - move to next instruction :P
+			break;
+		case 14: // Page fault
+			screen_print_int(stack.err_code, 0x05, sx, sy++);
+			HANG();
+			// Do something!
+			break;
+	}
 	if (sy >= 25){
 		sy = 0;
 	}

@@ -67,64 +67,25 @@ extern void enable_a20();
 * @return status code (1 - ok, 0 - failed)
 */
 extern uint32 read_e820(e820map_t *mem_map);
-/**
-* Filter out memory map of unusable regions
-* and sort them in ascending order
-*/
-static void filter_e820(e820map_t *mem_map){
-	uint16 i = 0;
-	// Filter out unusuable regions
-	while (i < mem_map->size){
-		if (mem_map->entries[i].length < 0 || mem_map->entries[i].type == kMemBad){
-			if (i + 1 < mem_map->size){
-				mem_map->entries[i] = mem_map->entries[i + 1];
-			}
-			mem_map->size --;
-		} else {
-			i ++;
-		}
-	}
-	// Do the bubble sort to make them in ascending order
-	e820entry_t e;
-	uint16 swapped  = 1;
-	uint16 count = mem_map->size;
-	while (count > 0 && swapped ){
-		i = 0;
-		swapped  = 0;
-		while (i < count - 1){
-			if (mem_map->entries[i].base > mem_map->entries[i + 1].base){
-				e = mem_map->entries[i];
-				mem_map->entries[i] = mem_map->entries[i + 1];
-				mem_map->entries[i + 1] = e;
-				swapped  = 1;
-			}
-			i ++;
-		}
-		count --;
-	}
-	RET32();
-}
 
 /**
 * Initialize Real Mode
 */
 void main16(){
 	e820map_t *mem_map = (e820map_t *)E820_LOC;
+
+	// Setup video mode
 #if VIDEOMODE == 1
 	set_video_mode(0x03); // Teletype
 #elif VIDEOMODE == 2
 	set_svga_mode(0x011B); // 1280x1024 (24 bit) 
 #endif
+
 	// Enable A20 gate
 	enable_a20();
 	// Read E820 map
-	if (read_e820(mem_map)){
-		// Process E820 map
-		filter_e820(mem_map);
-	} else {
-		HANG();
-	}	
-
+	read_e820(mem_map);
+	
 	// Exit like we want it!
 	// It's uggly, but as we can not control the entry of this function
 	// at least we can control the exit. 

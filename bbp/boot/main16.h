@@ -46,16 +46,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common16.h"
 
 /**
-* Memory type codes for E820
-*/
-enum eMemType {
-	kMemOk = 1,			// Normal memory - usable
-	kMemReserved,		// Reserved memory - unusable
-	kMemACPIReclaim,	// ACPI reclaimable memory - might be usable after ACPI is taken care of
-	kMemACPI,			// ACPI NVS memory - unusable
-	kMemBad				// Bad memory - unsuable
-};
-/**
 * E820 memory map entry structure
 */
 struct e820entry_struct {
