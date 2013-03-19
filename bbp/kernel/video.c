@@ -5,8 +5,7 @@ Helper functions for operations with teletype (text mode) screen
 
 Teletype video functions:
 	* clear screen
-	* put a string on the screen
-	* put an integer on the screen
+	* print a formated string on the screen
 
 License (BSD-3)
 ===============
@@ -38,46 +37,89 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "screen.h"
-#include "string.h"
-#include "memory.h"
+#include "../config.h"
+#include "video.h"
+#include "lib.h"
 
-void screen_clear(uint8 color){
-	char *vidmem = (char *) 0xB8000;
+uint8 vcolumns = 80;
+uint8 vrows = 25;
+uint64 vrow_offset = 0;
+
+void video_clear(uint8 color){
+#if VIDEOMODE == 1
+	char *vidmem = (char *)VIDEOMEM_LOC;
 	uint16 i = 0;
 	uint8 columns = 80;
 	uint8 lines = 25;
 	while (i < (columns * lines * 2)){
-		vidmem[i] = 0x20; // Space
+		vidmem[i] = ' ';
 		i ++;
 		vidmem[i] = color;
 		i ++;
 	}
+#endif
 }
-
-void screen_print_str(const char *message, uint8 color, uint8 x, uint8 y){
-	char *vidmem = (char *) 0xB8000;
-	uint8 columns = 80;
-	uint8 lines = 25;
-	uint16 i = (y * columns * 2) + (x * 2);
-	while (*message != 0){
-		if (*message == 0x0A){ // New line (a.k.a \n)
-			y ++;
-			i = (y * columns * 2);
-			*message ++;
-		} else {
-			vidmem[i] = *message;
-			*message ++;
-			i ++;
-			vidmem[i] = color;
-			i ++;
+void video_scroll(uint8 color){
+#if VIDEOMODE == 1
+	char *vidmem = (char *)VIDEOMEM_LOC;
+	uint8 c;
+	uint8 r;
+	uint16 i;
+	uint16 p;
+	// Scroll the screen
+	for (r = 1; r < vrows; r ++){
+		for (c = 0; c < vcolumns; c ++){
+			// Clear previous line
+			p = ((r - 1) * vcolumns * 2) + (c * 2);
+			vidmem[p] = ' ';
+			vidmem[p + 1] = color;
+			// Copy current line
+			i = (r * vcolumns * 2) + (c * 2);
+			vidmem[p] = vidmem[i];
+			vidmem[p + 1] = vidmem[i + 1];
 		}
 	}
+	// Clear the last line
+	r = vrows - 1;
+	for (c = 0; c < vcolumns; c ++){
+		i = (r * vcolumns * 2) + (c * 2);
+		vidmem[i] = ' ';
+		vidmem[i + 1] = color;
+	}
+	vrow_offset ++;
+#endif
 }
-
-void screen_print_int(const uint64 value, uint8 color, uint8 x, uint8 y){
-	static char integer[21] = "";
-	mem_set(0, (uint8 *)integer, 21);
-	int_to_str(value, integer, 20);
-	screen_print_str(integer, color, x, y);
+void video_print(uint8 x, uint8 y, uint8 color, const char *format, ...){
+#if VIDEOMODE == 1
+	char *vidmem = (char *)VIDEOMEM_LOC;
+	static char str[4000];
+	char *s = (char *)format;
+	mem_fill((uint8 *)str, 2000, 0);
+	uint16 i;
+	// Keep everything in bounds
+	y = y - vrow_offset;
+	//va_list args;
+	//va_start(args, format);
+	//if (__write_f(str, 2000, format, args)){
+		// Write to screen only if there's any thing to write at all
+		while (*s != 0){
+			if (*s == 0x0A || x >= vcolumns){ // New line (a.k.a \n) or forced wrap
+				x = 0;
+				y ++;
+			}
+			if (y >= vrows){
+				video_scroll(color);
+				y = vrows - 1;
+			}
+			if (*s >= 0x20 && *s <= 0x7E){ // Only valid ASCII chars
+				i = (y * vcolumns * 2) + (x * 2);
+				vidmem[i] = *s;
+				vidmem[i + 1] = color;
+				x ++;
+			}
+			s++;
+		}
+	//}
+	//va_end(args);
+#endif
 }

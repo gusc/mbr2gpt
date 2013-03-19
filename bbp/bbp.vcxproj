@@ -26,9 +26,8 @@
     <ClCompile Include="boot\main32.c" />
     <ClCompile Include="kernel\acpi.c" />
     <ClCompile Include="kernel\kmain.c" />
-    <ClCompile Include="kernel\memory.c" />
-    <ClCompile Include="kernel\screen.c" />
-    <ClCompile Include="kernel\string.c" />
+    <ClCompile Include="kernel\lib.c" />
+    <ClCompile Include="kernel\video.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="boot32\acpi.h" />
@@ -57,10 +56,9 @@
     <ClInclude Include="kernel\interrupts.h" />
     <ClInclude Include="kernel\io.h" />
     <ClInclude Include="kernel\kmain.h" />
-    <ClInclude Include="kernel\memory.h" />
+    <ClInclude Include="kernel\lib.h" />
     <ClInclude Include="kernel\msr.h" />
-    <ClInclude Include="kernel\screen.h" />
-    <ClInclude Include="kernel\string.h" />
+    <ClInclude Include="kernel\video.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3D779CE6-A610-49F7-AC07-992AEEB4115D}</ProjectGuid>

@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "acpi.h"
-#include "memory.h"
+#include "lib.h"
 
 RSDP_t *rsdp = null;
 
@@ -57,7 +57,7 @@ RSDP_t *acpi_find(){
 	if (rsdp == null){
 		rsdp = (RSDP_t *)0x80000; // We start at the beginning of EBDA
 		do {
-			if (mem_cmp((uint8 *)rsdp->signature, (uint8 *)sign, 8)){
+			if (mem_compare((uint8 *)rsdp->signature, (uint8 *)sign, 8)){
 				if (rsdp->revision == 0){
 					if (acpi_checksum((uint8 *)rsdp, sizeof(uint8) * 20) == 0){ // Revision 1.0 checksum
 						return rsdp;
@@ -93,7 +93,7 @@ SDTHeader_t *acpi_table(const char signature[4]){
 				ptr += (i * 4);
 				// Get the pointer of table in table pointer array
 				th = (SDTHeader_t *)((uint64)(*((uint32 *)ptr)));
-				if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
+				if (mem_compare((uint8 *)th->signature, (uint8 *)signature, 4)){
 					if (acpi_checksum((uint8 *)th, th->length) == 0){
 						return th;
 					}
@@ -112,7 +112,7 @@ SDTHeader_t *acpi_table(const char signature[4]){
 				ptr += (i * 8);
 				// Get the pointer of table in table pointer array
 				th = (SDTHeader_t *)(*((uint64 *)ptr));
-				if (mem_cmp((uint8 *)th->signature, (uint8 *)signature, 4)){
+				if (mem_compare((uint8 *)th->signature, (uint8 *)signature, 4)){
 					if (acpi_checksum((uint8 *)th, th->length) == 0){
 						return th;
 					}

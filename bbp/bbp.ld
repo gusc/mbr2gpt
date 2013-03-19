@@ -6,11 +6,11 @@ SECTIONS {
 		boot.o(.text); 
 		*(.text);
 	}
-	.data : {
-		*(.data);
-	}
 	.rodata : {
 		*(.rodata);
+	}
+	.data : {
+		*(.data);
 	}
 	.bss : {
 		*(.bss);
@@ -18,5 +18,5 @@ SECTIONS {
 	/DISCARD/ : {
 		*(.eh_frame);
 	}
-	. = ALIGN(1024);
+	. = ALIGN(4096);
 }

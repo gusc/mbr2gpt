@@ -6,14 +6,14 @@ SECTIONS {
 		main16.c64.o(.text);
 		*(.text);
 	}
-	.data : { 
-		*(.data);
-	}
 	.rodata : { 
 		*(.rodata);
+	}
+	.data : { 
+		*(.data);
 	}
 	.bss : {
 		*(.bss);
 	}
-	. = ALIGN(1024);
+	. = ALIGN(4096);
 }

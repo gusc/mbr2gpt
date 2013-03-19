@@ -138,8 +138,8 @@ typedef struct GAS_struct GAS_t;
 */
 struct FADT_struct {
 	SDTHeader_t h;					// Standard ACPI header
-	FACS_t *firmware_ctrl;			// Pointer to FACS table
-	DSDT_t *dsdt;					// Pointer to DSDT table
+	uint32 firmware_ctrl;			// Pointer to FACS table
+	uint32 dsdt;					// Pointer to DSDT table
  
 	// field used in ACPI 1.0; no longer in use, for compatibility only
 	uint8 reserved;

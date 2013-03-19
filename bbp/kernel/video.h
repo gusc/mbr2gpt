@@ -1,9 +1,11 @@
 /*
 
-Helper functions for operations on memory buffers
-=================================================
+Helper functions for operations with teletype (text mode) screen
+================================================================
 
-Memory buffer manipulation functions
+Teletype video functions:
+	* clear screen
+	* print a formated string on the screen
 
 License (BSD-3)
 ===============
@@ -35,34 +37,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef __memory_h
-#define __memory_h
+#ifndef __video_h
+#define __video_h
 
 #include "common.h"
 
 /**
-* Copy data from one memory location to another
-* @param [in] src - source memory
-* @param [out] dest - destination memory
-* @param len - number of bytes to copy
+* Clear the teletype (text mode) screen
+* @param color - color byte
 * @return void
 */
-void mem_copy(const uint8 *src, uint8 *dest, uint64 len);
+void video_clear(uint8 color);
 /**
-* Set a value in memory
-* @param [in] val - value to set
-* @param [out] dest - destination memory
-* @param len - number of bytes to set
+* Scroll whole video buffer upwards
+* @param color - color byte
 * @return void
 */
-void mem_set(uint8 val, uint8 *dest, uint64 len);
+void video_scroll(uint8 color);
 /**
-* Compare two memory regions
-* @param [in] buff1
-* @param [in] buff2
-* @param len - comparison length
-* @return 1 if they are equal, 0 if not
+* Print a formated string on the teletype (text mode) screen
+* @param x coordinate (a.k.a. column 0-79)
+* @param y coordinate (a.k.a. line 0-24)
+* @param color - color byte
+* @param [in] format - standard C printf format string
+* @param [in] ... - additional arguments
+* @return void
 */
-bool mem_cmp(const uint8 *buff1, const uint8 *buff2, uint64 len);
+void video_print(uint8 x, uint8 y, uint8 color, const char *format, ...);
 
-#endif
+#endif /* __video_h */

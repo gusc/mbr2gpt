@@ -146,7 +146,7 @@ static void setup_pages(uint64 ammount){
 	pml4 = (pm_t*)PT_LOC; // @0x00100000
 	pml3 = (pm_t*)(((uint32)pml4) + (sizeof(pm_t) * 512)); // @0x00101000
 	pml2 = (pm_t*)(((uint32)pml3) + (sizeof(pm_t) * 512)); // @0x00102000
-	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * dir_count)); // @0x00103000
+	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * (uint32)dir_count)); // @0x00103000
 	
 	// Clear memory region where the page tables will reside
 	mem_set(0, (uint8 *)pml4, sizeof(pm_t) * 512);
@@ -186,6 +186,16 @@ static void setup_pages(uint64 ammount){
 * Initialize Protected Mode
 */
 void main32(){
+	
+#if DEBUG == 1 && VIDEOMODE == 1
+	// Print out the first visible message
+	char *vm = (char *)VIDEOMEM_LOC;
+	vm[0] = 'P';
+	vm[1] = 0x05;
+	vm[2] = 'M';
+	vm[3] = 0x05;
+#endif
+
 	e820map_t *mem_map = (e820map_t *)E820_LOC;
 	// Sort memory map
 	sort_e820(mem_map);

@@ -47,7 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 0 - none, leave it as is
 // 1 - teletype
 // 2 - VGA
-#define VIDEOMODE 1 
+#define VIDEOMODE 1
 // Enable debug output
 #define DEBUG 1
 // Memory location where to store PMLx page tables
@@ -59,11 +59,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // E820 memory map location
 #define E820_LOC 0x0800
-// Teletype video memory location
-// This can be used only in 32+ bit modes
-#define VIDEOTXT_LOC 0xB8000
-// VGA video memory location
-// This can be used only in 32+ bit modes
-#define VIDEOVGA_LOC 0xA0000
+#if VIDEOMODE == 1
+	// Teletype video memory location
+	// This can be used only in 32+ bit modes
+	#define VIDEOMEM_LOC 0xB8000
+#elif VIDEOMODE == 2
+	// VGA video memory location
+	// This can be used only in 32+ bit modes
+	#define VIDEOMEM_LOC 0xA0000
+#else
+	// Null address
+	#define VIDEOMEM_LOC 0x0
+#endif
 
 #endif

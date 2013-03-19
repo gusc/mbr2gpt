@@ -6,21 +6,24 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.innotek.de/VirtualBox-settings" version="1.12-windows">
-  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-03-18T17:35:45Z">
+  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-03-19T19:11:27Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa}" location="Disk.vmdk" format="VMDK" type="Normal"/>
       </HardDisks>
-      <DVDImages/>
+      <DVDImages>
+        <Image uuid="{57f1d129-2ed5-4404-bc24-900b820825d0}" location="C:/Program Files/Oracle/VirtualBox/VBoxGuestAdditions.iso"/>
+      </DVDImages>
       <FloppyImages/>
     </MediaRegistry>
     <ExtraData>
+      <ExtraDataItem name="GUI/InfoDlgState" value="400,450,normal"/>
       <ExtraDataItem name="GUI/LastCloseAction" value="powerOff"/>
       <ExtraDataItem name="GUI/LastGuestSizeHint" value="720,400"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="514,311,720,439"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="810,230,720,439"/>
     </ExtraData>
     <Hardware version="2">
-      <CPU count="1" hotplug="false">
+      <CPU count="1" executionCap="80" hotplug="false">
         <HardwareVirtEx enabled="true" exclusive="false"/>
         <HardwareVirtExNestedPaging enabled="true"/>
         <HardwareVirtExVPID enabled="true"/>
@@ -30,7 +33,7 @@
       </CPU>
       <Memory RAMSize="256" PageFusion="false"/>
       <HID Pointing="PS2Mouse" Keyboard="PS2Keyboard"/>
-      <HPET enabled="false"/>
+      <HPET enabled="true"/>
       <Chipset type="PIIX3"/>
       <Boot>
         <Order position="1" device="HardDisk"/>
@@ -38,9 +41,13 @@
         <Order position="3" device="None"/>
         <Order position="4" device="None"/>
       </Boot>
-      <Display VRAMSize="10" monitorCount="1" accelerate3D="false" accelerate2DVideo="false"/>
+      <Display VRAMSize="32" monitorCount="1" accelerate3D="true" accelerate2DVideo="false"/>
       <VideoRecording enabled="false" file="Test.webm" horzRes="640" vertRes="480"/>
-      <RemoteDisplay enabled="false" authType="Null" authTimeout="5000"/>
+      <RemoteDisplay enabled="false" authType="Null" authTimeout="5000">
+        <VRDEProperties>
+          <Property name="TCP/Ports" value="3389"/>
+        </VRDEProperties>
+      </RemoteDisplay>
       <BIOS>
         <ACPI enabled="true"/>
         <IOAPIC enabled="true"/>
@@ -52,7 +59,9 @@
       <USBController enabled="true" enabledEhci="false"/>
       <Network>
         <Adapter slot="0" enabled="true" MACAddress="08002768B31B" cable="true" speed="0" type="Am79C973">
-          <DisabledModes/>
+          <DisabledModes>
+            <InternalNetwork name="intnet"/>
+          </DisabledModes>
           <NAT>
             <DNS pass-domain="true" use-proxy="false" use-host-resolver="false"/>
             <Alias logging="false" proxy-only="false" use-same-ports="false"/>
@@ -140,12 +149,14 @@
       </EmulatedUSB>
       <Guest memoryBalloonSize="0"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1363608250296875001" flags=""/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1363637287531250000" flags=""/>
       </GuestProperties>
     </Hardware>
     <StorageControllers>
       <StorageController name="IDE" type="PIIX4" PortCount="2" useHostIOCache="true" Bootable="true">
-        <AttachedDevice passthrough="false" type="DVD" port="1" device="0"/>
+        <AttachedDevice passthrough="false" type="DVD" port="1" device="0">
+          <Image uuid="{57f1d129-2ed5-4404-bc24-900b820825d0}"/>
+        </AttachedDevice>
         <AttachedDevice type="HardDisk" port="0" device="0">
           <Image uuid="{6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa}"/>
         </AttachedDevice>

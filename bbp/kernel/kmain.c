@@ -35,18 +35,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "kmain.h"
 #include "../config.h"
-#include "screen.h"
-#include "memory.h"
-#include "string.h"
+#include "kmain.h"
+#include "lib.h"
+
+#include "video.h"
 #include "acpi.h"
 #include "io.h"
 #include "interrupts.h"
 
 // Global cursor position
-uint8 sx = 0;
-uint8 sy = 0;
+uint16 sx = 0;
+uint16 sy = 0;
 /**
 * Interrupt Descriptor Table
 */
@@ -91,21 +91,52 @@ static char *ints[] = {
   "Machine check exception"
 };
 
+static void video_print_int(uint8 x, uint8 y, uint8 color, const uint64 val, uint64 base){
+#define MAX_SCREEN_INT 32
+	static char str[MAX_SCREEN_INT + 1] = "";
+	mem_fill((uint8 *)str, MAX_SCREEN_INT + 1, 0);
+	int_to_str(str, MAX_SCREEN_INT, val, base);
+	video_print(x, y, color, str);
+}
+
 /**
 * Kernel entry point
 */
 void kmain(){
 	// Initialize interrupts
 	interrupt_init();
+
+#if DEBUG == 1
+	// Clear the screen
+	video_clear(0x07);
 	// Show something on the screen
-	screen_clear(0x07);
-	screen_print_str("Long mode", 0x05, sx, sy++);
+	video_print(sx, sy++, 0x05, "Long mode");
+	// Show memory ammount
+	e820map_t *mem_map = (e820map_t *)E820_LOC;
+	uint16 i;
+	uint64 max_mem = 0;
+	for (i = 0; i < mem_map->size; i ++){
+		if (mem_map->entries[i].base + mem_map->entries[i].length > max_mem){
+			max_mem = mem_map->entries[i].base + mem_map->entries[i].length;
+		}
+	}
+	max_mem = max_mem / 1024 / 1024;
+	video_print(sx, sy, 0x07, "RAM:     MB");
+	video_print_int(sx + 5, sy++, 0x05, max_mem, INT_BASE_DEC);
+#endif
+
 	// Initialize ACPI
 	acpi_init();
-	// Test interrupt exception: division by zero
+	
+	// Test interrupt exceptions
+	// division by zero:
 	//uint32 a = 1;
 	//uint32 b = 0;
 	//uint32 c = a / b;
+	// page fault:
+	//char *xyz = (char *)0xFFFFFFFF;
+	//*xyz = 'A';
+	
 	// Infinite loop
 	while(true){}
 }
@@ -113,42 +144,62 @@ void kmain(){
 static void acpi_init(){
 	RSDP_t *rsdp = acpi_find();
 	if (rsdp != null){
-		screen_print_str("RSDP @", 0x07, sx, sy);
-		screen_print_int((uint64)rsdp, 0x07, sx + 6, sy++);
-  
+#if DEBUG == 1
+		video_print(sx, sy, 0x07, "RSDP @");
+		video_print_int(sx + 6, sy++, 0x05, (uint64)rsdp, INT_BASE_HEX);
+#endif  
 		char facp[4] = {'F', 'A', 'C', 'P'};
 		FADT_t *fadt = (FADT_t *)acpi_table(facp);
 		if (fadt != null){
-			screen_print_str("FADT @", 0x07, sx, sy);
-			screen_print_int((uint64)fadt, 0x05, sx + 6, sy++);
-			screen_print_str("SMI port:", 0x07, sx, sy);
-			screen_print_int(fadt->smi_command_port, 0x05, sx +10, sy++);
-			screen_print_str("ACPI enb:", 0x07, sx, sy);
-			screen_print_int(fadt->acpi_enable, 0x05, sx +10, sy++);
-			screen_print_str("ACPI dis:", 0x07, sx, sy);
-			screen_print_int(fadt->acpi_disable, 0x05, sx +10, sy++);
-			/*
-			DSDT_t *dsdt = fadt->dsdt;
-			screen_print_int((uint64)dsdt, 0x07, sx, sy++);
-			screen_print_str("DSDT", 0x07, sx, sy++);
-			FACS_t *facs = fadt->firmware_ctrl;
-			screen_print_int((uint64)facs, 0x07, sx, sy++);
-			screen_print_str("FACS", 0x07, sx, sy++);
-			*/
+#if DEBUG == 1
+			video_print(sx, sy, 0x07, "FADT @");
+			video_print_int(sx + 6, sy++, 0x05, (uint64)fadt, INT_BASE_HEX);
+			video_print(sx, sy, 0x07, "SMI port:");
+			video_print_int(sx + 10, sy++, 0x05, (uint64)fadt->smi_command_port, INT_BASE_HEX);
+			video_print(sx, sy, 0x07, "ACPI enb:");
+			video_print_int(sx + 10, sy++, 0x05, (uint64)fadt->acpi_enable, INT_BASE_HEX);
+			video_print(sx, sy, 0x07, "ACPI dis:");
+			video_print_int(sx + 10, sy++, 0x05, (uint64)fadt->acpi_disable, INT_BASE_HEX);
+#endif
+			// Enable ACPI
+			if (fadt->smi_command_port > 0){
+				if (fadt->acpi_enable > 0 || fadt->acpi_disable > 0){
+#if DEBUG == 1
+					video_print(sx, sy++, 0x07, "Enable ACPI");
+#endif
+					outb((uint16)fadt->smi_command_port, fadt->acpi_enable);
+				}
+			}
+
+			DSDT_t *dsdt = (DSDT_t *)((uint64)fadt->dsdt);
+#if DEBUG == 1
+			video_print(sx, sy, 0x07, "DSDT @");
+			video_print_int(sx + 6, sy++, 0x05, (uint64)dsdt, INT_BASE_HEX);
+#endif
+
+			FACS_t *facs = (FACS_t *)((uint64)fadt->firmware_ctrl);
+#if DEBUG == 1
+			video_print(sx, sy, 0x07, "FACS @");
+			video_print_int(sx + 6, sy++, 0x05, (uint64)facs, INT_BASE_HEX);
+#endif
 		}
 
 		char apic[4] = {'A', 'P', 'I', 'C'};
 		MADT_t *madt = (MADT_t *)acpi_table(apic);
 		if (madt != null){
-			screen_print_str("MADT @", 0x07, sx, sy);
-			screen_print_int((uint64)madt, 0x05, sx + 6, sy++);
+#if DEBUG == 1
+			video_print(sx, sy, 0x07, "MADT @");
+			video_print_int(sx + 6, sy++, 0x05, (uint64)madt, INT_BASE_HEX);
+#endif
 		}
 		
 		char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
 		SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
 		if (ssdt != null){
-			screen_print_str("SSDT @", 0x07, sx, sy);
-			screen_print_int((uint64)ssdt, 0x05, sx + 6, sy++);
+#if DEBUG == 1
+			video_print(sx, sy, 0x07, "SSDT @");
+			video_print_int(sx + 6, sy++, 0x05, (uint64)ssdt, INT_BASE_HEX);
+#endif
 		}
 		
 	}
@@ -164,7 +215,7 @@ static void idt_set_entry(uint8 num, uint64 addr, uint16 flags){
 }
 
 static void interrupt_init(){
-	mem_set(0, (uint8 *)&idt, sizeof(idt_entry_t) * 256);
+	mem_fill((uint8 *)&idt, sizeof(idt_entry_t) * 256, 0);
 
 	// Remap the IRQ table.
 	outb(0x20, 0x11); // Initialize master PIC
@@ -210,6 +261,7 @@ static void interrupt_init(){
 	idt_set_entry(29, (uint64)isr29, 0x8E00);  // Reserved
 	idt_set_entry(30, (uint64)isr30, 0x8E00);  // Reserved
 	idt_set_entry(31, (uint64)isr31, 0x8E00);  // Reserved
+
 	idt_set_entry(32, (uint64)irq0 , 0x8E00);  // IRQ0 - Programmable Interrupt Timer Interrupt
 	idt_set_entry(33, (uint64)irq1 , 0x8E00);  // IRQ1 - Keyboard Interrupt
 	idt_set_entry(34, (uint64)irq2 , 0x8E00);  // IRQ2 - Cascade (used internally by the two PICs. never raised)
@@ -233,37 +285,50 @@ static void interrupt_init(){
 }
 
 void isr_handler(int_stack_t stack){
+#if DEBUG == 1
 	char msg[80] = "Interrupt ";
 	if (stack.int_no < 19){
-		str_copy(ints[stack.int_no], msg, 40);
+		str_copy(msg, 40, ints[stack.int_no]);
 	} else {
 		char *m = &msg[10];
-		uint32 len = int_to_str(stack.int_no, m, 20);
+		uint32 len = int_to_str(m, 20, stack.int_no, INT_BASE_DEC);
 		msg[10 + len] = 0x20;
 		m = &msg[11 + len];
-		int_to_str(stack.err_code, m, 20);
+		int_to_str(m, 20, stack.err_code, INT_BASE_HEX);
 	}
-	screen_print_str(msg, 0x08, sx, sy++);
+	video_print(sx, sy++, 0x08, msg);
+#endif
 	// Process some exceptions here
+	uint64 cr2 = 0;
 	switch (stack.int_no){
 		case 0: // Division by zero
 			stack.rip++; // it's ok to divide by zero - move to next instruction :P
 			break;
 		case 14: // Page fault
-			screen_print_int(stack.err_code, 0x05, sx, sy++);
+			asm volatile ("mov %%cr2, %0" : "=a"(cr2) :);
+#if DEBUG == 1
+			video_print(sx, sy, 0x07, "Error: ");
+			video_print_int(sx + 7, sy++, 0x05, stack.err_code, INT_BASE_HEX);
+			video_print(sx, sy, 0x07, "Addr: @");
+			video_print_int(sx + 7, sy++, 0x05, cr2, INT_BASE_HEX);
+#endif
 			HANG();
 			// Do something!
 			break;
 	}
+#if DEBUG == 1
 	if (sy >= 25){
 		sy = 0;
 	}
+#endif
 }
 
 void irq_handler(int_stack_t stack){
-	screen_print_str("IRQ ", 0x08, sx, sy);
-	screen_print_int(stack.err_code, 0x05, sx + 4, sy++);
+#if DEBUG == 1
+	video_print(sx, sy, 0x08, "IRQ ");
+	video_print_int(sx + 4, sy++, 0x05, stack.err_code, INT_BASE_DEC);
 	if (sy >= 25){
 		sy = 0;
 	}
+#endif
 }

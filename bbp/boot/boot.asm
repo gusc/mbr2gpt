@@ -76,9 +76,9 @@ start16:										; Boot entry point
 	call main16									; call C function main16() (see: boot/main16.c)
 
 	; Enter Protected mode
-	lgdt [gdt_ptr]								; load 32bit GDT pointer
+	lgdt [gdt32_ptr]							; load 32bit GDT pointer
 	mov eax, cr0								; read from CR0
-	or eax, 0x0001								; set Protected Mode bit
+	or eax, 0x00000001							; set Protected Mode bit
 	mov cr0, eax								; write to CR0
 	jmp 0x8:start32								; do the magic jump to finalize Protected Mode setup
 
@@ -87,6 +87,13 @@ start16:										; Boot entry point
 start32:										; Protected mode entry point
 	; Setup segment registers
 	mov eax, 0x10								; selector 0x10 - data descriptor
+	xor ebx, ebx								; clear EBX
+	xor ecx, ecx								; clear ECX
+	xor edx, edx								; clear EDX
+	xor esi, esi								; clear ESI
+	xor edi, edi								; clear EDI
+	xor ebp, ebp								; clear EBP
+	mov esp, ORG_LOC							; clear the stack
 	mov ss, ax									; set stack segment
 	mov ds, ax									; set data segment
 	mov es, ax									; set extra segment
@@ -97,32 +104,33 @@ start32:										; Protected mode entry point
 	call main32									; call C function main32() (see: boot/main32.c)
 
 	; Disable all IRQs
-	mov al, 0xFF								; set out 0xFF to 0xA1 and 0x21 to disable all IRQs
-	out 0xA1, al
-	out 0x21, al
+	;mov al, 0xFF								; set out 0xFF to 0xA1 and 0x21 to disable all IRQs
+	;out 0xA1, al
+	;out 0x21, al
 
 	; Pause
-	nop
-	nop
+	;nop
+	;nop
 
 	; Load IDT (empty pointer for now  so that any NMI causes a triple fault)										
-	lidt [idt_ptr]								; load 32bit IDT pointer
+	;lidt [idt_ptr]								; load 32bit IDT pointer
 
 	; Setup long mode.
+	mov eax, cr0								; read from CR0
+	and eax, 0x7FFFFFFF							; clear paging bit
+	mov cr0, eax								; write to CR0
+	mov eax, [pml4_ptr32]						; point eax to PML4 pointer location
+	mov cr3, eax								; save PML4 pointer into CR3
 	mov eax, cr4								; read from CR4
 	or eax, 0x000000A0							; set the PAE and PGE bit
 	mov cr4, eax								; write to CR4
-	mov edx, [pml4_ptr32]						; point edx to PML4 pointer location
-	mov cr3, edx								; save this into CR3
 	mov ecx, 0xC0000080							; read from the EFER MSR
 	rdmsr										; read MSR
 	or eax, 0x00000100							; set the LME bit
 	wrmsr										; write MSR
-
-	; Activate Long Mode
-	mov ebx, cr0								; read from CR0
-	or ebx,0x80000000							; set enabling paging bit
-	mov cr0, ebx								; write to CR0
+	mov eax, cr0								; read from CR0
+	or eax,0x80000000							; set paging bit
+	mov cr0, eax								; write to CR0
 	lgdt [gdt64_ptr]							; load 64bit GDT pointer
 	jmp 0x8:start64								; do the magic jump to Long Mode
 
@@ -137,7 +145,7 @@ start64:										; Long Mode entry point
 	xor rsi, rsi								; aka r4
 	xor rdi, rdi								; aka r5
 	xor rbp, rbp								; aka r6
-	mov rsp, ORG_LOC							; aka r7 and restart the stack
+	mov rsp, ORG_LOC							; aka r7 and clear the stack
 	xor r8, r8
 	xor r9, r9
 	xor r10, r10
@@ -159,15 +167,15 @@ start64:										; Long Mode entry point
 
 [section .data]
 
-[global idt]									; Make IDT accessible from C
-[global idt_ptr]								; Make IDT pointer accessible from C
+;[global idt]									; Make IDT accessible from C
+;[global idt_ptr]								; Make IDT pointer accessible from C
 [global pml4_ptr32]								; Make PML4 pointer accessible from C
 
 ; IDT pointer (zero-pointer)
-idt_ptr:
-	dw 0										; Limit (size)
-	dd 0										; Base (location)
-idt_ptr_end:
+;idt_ptr:
+;	dw 0										; Limit (size)
+;	dd 0										; Base (location)
+;idt_ptr_end:
 
 ; PML4 pointer (for 32bit CR3)
 pml4_ptr32:
@@ -177,7 +185,7 @@ pml4_ptr32_end:
 [section .rodata]
 
 ; Global Descriptor Table (GDT) used to do the Protected Mode jump (this is read-only as we don't need to update it)
-gdt:
+gdt32:
 ; Null Descriptor (selector: 0x00)
 .null_desc:
 	dw 0x0000
@@ -204,13 +212,13 @@ gdt:
 	db 10010010b								; 40:47 - Access byte
 	db 11001111b								; 48:55 - Limit (high nibble) + Flags (4 bits) 
 	db 0x00										; 56:64 - Base (high word high byte)
-gdt_end:
+gdt32_end:
 
 ; GDT pointer (this get's passed to LGDT)
-gdt_ptr:
-	dw (gdt_end - gdt - 1)						; Limit (size)
-	dd (gdt + 0x000000000000)					; Base (location)
-gdt_ptr_end:
+gdt32_ptr:
+	dw (gdt32_end - gdt32 - 1)					; Limit (size)
+	dd (gdt32 + 0x000000000000)					; Base (location)
+gdt32_ptr_end:
 
 ; 64bit GDT
 gdt64:
