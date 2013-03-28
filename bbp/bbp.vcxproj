@@ -58,6 +58,7 @@
     <ClInclude Include="kernel\kmain.h" />
     <ClInclude Include="kernel\lib.h" />
     <ClInclude Include="kernel\msr.h" />
+    <ClInclude Include="kernel\pci.h" />
     <ClInclude Include="kernel\video.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

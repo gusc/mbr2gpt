@@ -43,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "acpi.h"
 #include "io.h"
 #include "interrupts.h"
+#include "pci.h"
 
 // Global cursor position
 uint16 sx = 0;
