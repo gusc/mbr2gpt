@@ -34,23 +34,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef __pci_h
-#define __pci_h
+#include "pci.h"
+#include "io.h"
 
-#include "common.h"
-
-#define PCI_CONFIG_ADDRESS	0x0CF8
-#define PCI_CONFIG_DATA		0x0CFC
-
-typedef struct {
-	uint32 empty	: 2; // Always 0
-	uint32 reg		: 6; // Register number
-	uint32 fn		: 3; // Function number
-	uint32 dev		: 5; // Device number
-	uint32 bus		: 8; // Bus number
-	uint32 reserved	: 7; // Reserved
-	uint32 enabled	: 1; // Enabled bit
-} pci_addr_t;
-
-
-#endif /* __pci_h */

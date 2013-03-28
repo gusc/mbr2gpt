@@ -27,6 +27,7 @@
     <ClCompile Include="kernel\acpi.c" />
     <ClCompile Include="kernel\kmain.c" />
     <ClCompile Include="kernel\lib.c" />
+    <ClCompile Include="kernel\pci.c" />
     <ClCompile Include="kernel\video.c" />
   </ItemGroup>
   <ItemGroup>
