@@ -7,7 +7,7 @@ File list
 ---------
 
 Main entry files:
-* boot.asm - This file is comiled at the top of BBP binary image and receives control from MBR
+* boot.asm - This file is compiled at the top of BBP binary image and receives control from MBR
 
 Helper files:
 * bios.asm - BIOS wrapper routines used by main16.c

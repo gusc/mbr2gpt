@@ -10,21 +10,16 @@ Main entry files:
 * kmain.c - C entry point that get's called by ../boot/boot.asm
 
 Helper files:
-* acpi.c - ACPI table lokup implementation
-* acpi.h - ACPI table structures
+* acpi.* - ACPI table lokup implementation
 * common.h - data type definitions
 * cpuid.h - inline assembly definition for CPUID instruction
-* gdt.asm - GDT setup routines
-* gdt.h - GDT C data structures
-* idt.asm - IDT setup routines
-* idt.h - IDT C data structures
-* io.h - legaci IO instruction inline definitions
 * interrupts.asm - interrupt service routines
 * interrupts.h - intterupt service routine import in C
-* screen.* - screen writing functions
-* memory.* - memory functions
+* io.h - legacy IO instruction inline definitions
+* lib.* - tiny C helper library
 * msr.h - Model Specific Register (MSR) instructions inline definitions
-* string.* - string functions
+* pci.* - PCI operation functions
+* video.* - Video output functions
 
 Build files:
 * kernel.ld - Kernel linker script

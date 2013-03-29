@@ -13,9 +13,10 @@ Main entry files:
 
 Build files:
 * bbp.ld - BBP linker script
-* makefile - Make build script
-* buildimg.bat - Bach script to merge MBR and BBP code into Bochs disk image file using DiskUtils
 * bbp.vcxproj - Visual Studio 2010 project file
+* buildimg.bat - Bach script to merge MBR and BBP code into Bochs disk image file using DiskUtils
+* config.h - global configuration file (compile-time configuration)
+* makefile - Make build script
 
 
 Requirements
