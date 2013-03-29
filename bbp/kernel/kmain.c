@@ -66,6 +66,11 @@ static void interrupt_init();
 * @return void
 */
 static void acpi_init();
+/**
+* Initialize PCI bus
+* @return void
+*/
+static void pci_init();
 
 /**
 * Exception names
@@ -127,7 +132,10 @@ void kmain(){
 #endif
 
 	// Initialize ACPI
-	acpi_init();
+	//acpi_init();
+
+	// Initialize PCI
+	pci_init();
 	
 	// Test interrupt exceptions
 	// division by zero:
@@ -203,6 +211,39 @@ static void acpi_init(){
 #endif
 		}
 		
+	}
+}
+
+static void pci_init(){
+	uint16 bus;
+	uint8 device;
+	uint32 data;
+	uint16 vendor_id;
+	uint8 class_id;
+	uint8 subclass_id;
+	pci_addr_t addr;
+	addr.raw = 0;
+	addr.s.enabled = 1;
+	// Bruteforce for now
+	for (bus = 0; bus < 256; bus ++){
+		for (device = 0; device < 32; device ++){
+			addr.s.bus = bus;
+			addr.s.device = device;
+			addr.s.reg = 0;
+			data = pci_read(&addr);
+			vendor_id = (uint16)(data >> 8);
+			if (vendor_id != 0xFFFF){
+				video_print(sx, sy, 0x05, "Vendor ID:");
+				video_print_int(sx + 11, sy++, 0x07, (uint64)vendor_id, 16);
+				addr.s.reg = 0x8;
+				data = pci_read(&addr);
+				class_id = (uint8)data;
+				subclass_id = (uint8)(data >> 8);
+				video_print(sx, sy, 0x05, "Class:");
+				video_print_int(sx + 7, sy, 0x07, (uint64)class_id, 16);
+				video_print_int(sx + 12, sy++, 0x07, (uint64)subclass_id, 16);
+			}
+		}
 	}
 }
 

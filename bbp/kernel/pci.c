@@ -37,3 +37,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pci.h"
 #include "io.h"
 
+uint32 pci_read(pci_addr_t *addr){
+	uint32 data;
+	outd(PCI_CONFIG_ADDRESS, addr->raw);
+	data = ind(PCI_CONFIG_DATA);
+	return data;
+}
+
+void pci_write(pci_addr_t *addr, uint32 data){
+	outd(PCI_CONFIG_ADDRESS, addr->raw);
+	outd(PCI_CONFIG_DATA, data);
+}

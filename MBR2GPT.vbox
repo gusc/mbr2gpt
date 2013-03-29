@@ -6,7 +6,7 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.innotek.de/VirtualBox-settings" version="1.12-windows">
-  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-03-19T19:11:27Z">
+  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Other" snapshotFolder="Snapshots" lastStateChange="2013-03-29T21:11:38Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa}" location="Disk.vmdk" format="VMDK" type="Normal"/>
@@ -20,7 +20,7 @@
       <ExtraDataItem name="GUI/InfoDlgState" value="400,450,normal"/>
       <ExtraDataItem name="GUI/LastCloseAction" value="powerOff"/>
       <ExtraDataItem name="GUI/LastGuestSizeHint" value="720,400"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="810,230,720,439"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="552,230,720,442"/>
     </ExtraData>
     <Hardware version="2">
       <CPU count="1" executionCap="80" hotplug="false">
@@ -59,9 +59,7 @@
       <USBController enabled="true" enabledEhci="false"/>
       <Network>
         <Adapter slot="0" enabled="true" MACAddress="08002768B31B" cable="true" speed="0" type="Am79C973">
-          <DisabledModes>
-            <InternalNetwork name="intnet"/>
-          </DisabledModes>
+          <DisabledModes/>
           <NAT>
             <DNS pass-domain="true" use-proxy="false" use-host-resolver="false"/>
             <Alias logging="false" proxy-only="false" use-same-ports="false"/>
@@ -149,7 +147,7 @@
       </EmulatedUSB>
       <Guest memoryBalloonSize="0"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1363637287531250000" flags=""/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="C" timestamp="1364591492232236500" flags=""/>
       </GuestProperties>
     </Hardware>
     <StorageControllers>

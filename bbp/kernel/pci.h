@@ -42,15 +42,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PCI_CONFIG_ADDRESS	0x0CF8
 #define PCI_CONFIG_DATA		0x0CFC
 
-typedef struct {
-	uint32 empty	: 2; // Always 0
-	uint32 reg		: 6; // Register number
-	uint32 fn		: 3; // Function number
-	uint32 dev		: 5; // Device number
-	uint32 bus		: 8; // Bus number
-	uint32 reserved	: 7; // Reserved
-	uint32 enabled	: 1; // Enabled bit
+#define PCI_REG_DEVID_VNDID	0x0
+#define PCI_REG_STATUS_CMD	0x4
+#define PCI_REG_CLS_PRG_REV	0x8
+#define PCI_REG_BIST_TYPE	0xC
+
+typedef union {
+	struct {
+		uint32 empty	: 2; // Always 0
+		uint32 reg		: 6; // Register number
+		uint32 fn		: 3; // Function number
+		uint32 device	: 5; // Device number
+		uint32 bus		: 8; // Bus number
+		uint32 reserved	: 7; // Reserved
+		uint32 enabled	: 1; // Enabled bit
+	} s;
+	uint32 raw;
 } pci_addr_t;
+
+/**
+* Read from PCI bus/device
+* @param addr [in] - PCI address (bus, device, function, register)
+* @return register value
+*/
+uint32 pci_read(pci_addr_t *addr);
+/**
+* Write to PCI bus/device
+* @param addr [in] - PCI address (bus, device, function, register)
+* @param data - data to write
+*/
+void pci_write(pci_addr_t *addr, uint32 data);
 
 
 #endif /* __pci_h */
