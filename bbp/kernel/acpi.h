@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __acpi_h
 
 #include "common.h"
+#include "../config.h"
 
 /**
 * Root System Descriptor Pointer
@@ -268,10 +269,22 @@ typedef struct LocalNMI_struct LocalNMI_t;
 */
 bool acpi_init();
 /**
+* Get the RSDP pointer
+* @return RSDP pointer or null if ACPI is not initialized or failed to initialize
+*/
+RSDP_t *acpi_rsdp();
+/**
 * Locate ACPI table - you must run acpi_init() first
 * @param [in] signature - table signature (table name)
 * @return pointer to table header (from here on you can locate all the other data)
 */
 SDTHeader_t *acpi_table(const char signature[4]);
+
+#if DEBUG == 1
+	/**
+	* List available ACPI tables on screen
+	*/
+	void acpi_list();
+#endif
 
 #endif

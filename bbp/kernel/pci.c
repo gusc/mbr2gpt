@@ -34,8 +34,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "pci.h"
 #include "io.h"
+#include "pci.h"
 
 void pci_init(){
 	uint16 bus;

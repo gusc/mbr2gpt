@@ -38,36 +38,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../config.h"
 #include "kmain.h"
 #include "lib.h"
-
-#if DEBUG == 1
-	#include "debug_print.h"
-#endif
-#include "paging.h"
-#include "apic.h"
-#include "acpi.h"
 #include "io.h"
 #include "interrupts.h"
+#include "paging.h"
+#include "acpi.h"
+#include "apic.h"
 #include "pci.h"
-
-/**
-* Page table structures
-*/
-static pm_t *pml4; // a.k.a. PML4T
-static pm_t *pml3; // a.k.a. PTD (page directory table)
-static pm_t *pml2; // a.k.a. PD (page directory)
-static pm_t *pml1; // a.k.a. PT (page table)
-
 #if DEBUG == 1
-/**
-* List available ACPI tables on screen
-*/
-static void acpi_list();
+	#include "debug_print.h"
 #endif
 
 /**
 * Kernel entry point
 */
 void kmain(){
+
 #if DEBUG == 1
 	// Clear the screen
 	debug_clear(DC_WB);
@@ -93,21 +78,16 @@ void kmain(){
 	max_mem = max_mem / 1024 / 1024;
 	debug_print(DC_WB, "RAM: %d", max_mem);
 #endif
-		
+	
 	// Initialize ACPI
 	if (acpi_init()){
 #if DEBUG == 1
 		// List available ACPI tables
-		acpi_list();
+		//acpi_list();
 #endif
 		// Initialize APIC
-		//apic_init();
-		// Map pages to APCI base location
-		//pml4 = (pm_t*)PT_LOC; // @0x00100000
-		//apic_base_t apic = apic_get_base();
-		//video_print_int(sx, sy++, 0x07, apic.raw, 16);
-		//video_print_int(sx, sy++, 0x07, apic_read_ioapic(apic, APIC_LAPIC_ID), 16);
-		//video_print_int(sx, sy++, 0x07, apic_read_ioapic(apic, APIC_LAPIC_VERSION), 16);
+		apic_init();
+
 		// Initialize PCI
 		//pci_init();
 	}
@@ -124,50 +104,3 @@ void kmain(){
 	// Infinite loop
 	while(true){}
 }
-
-#if DEBUG == 1
-static void acpi_list(RSDP_t *rsdp){
-	if (rsdp != null){
-		SDTHeader_t *th;
-		uint32 i;
-		uint32 count;
-		char sign[5] = "";
-		mem_fill((uint8 *)sign, 5, 0);
-		if (rsdp->revision == 0){
-			debug_print(DC_WB, "ACPI v1.0");
-			// ACPI version 1.0
-			RSDT_t *rsdt = (RSDT_t *)((uint64)rsdp->RSDT_address);
-			uint64 ptr;
-			// Get count of other table pointers
-			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
-			for (i = 0; i < count; i ++){
-				// Get an address of table pointer array
-				ptr = (uint64)&rsdt->ptr;
-				// Move on to entry i (32bits = 4 bytes) in table pointer array
-				ptr += (i * 4);
-				// Get the pointer of table in table pointer array
-				th = (SDTHeader_t *)((uint64)(*((uint32 *)ptr)));
-				mem_copy((uint8 *)sign, 4, (uint8 *)th->signature);
-				debug_print(DC_WB, sign);
-			}
-		} else {
-			debug_print(DC_WB, "ACPI v2.0+");
-			// ACPI version 2.0+
-			XSDT_t *xsdt = (XSDT_t *)rsdp->XSDT_address;
-			uint64 ptr;
-			// Get count of other table pointers
-			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 4;
-			for (i = 0; i < count; i ++){
-				// Get an address of table pointer array
-				ptr = (uint64)&xsdt->ptr;
-				// Move on to entry i (64bits = 8 bytes) in table pointer array
-				ptr += (i * 8);
-				// Get the pointer of table in table pointer array
-				th = (SDTHeader_t *)(*((uint64 *)ptr));
-				mem_copy((uint8 *)sign, 4, (uint8 *)th->signature);
-				debug_print(DC_WB, sign);
-			}
-		}
-	}
-}
-#endif

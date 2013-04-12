@@ -33,19 +33,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "../config.h"
 #include "apic.h"
 #include "msr.h"
 #include "acpi.h"
-#include "../config.h"
 #if DEBUG == 1
 	#include "debug_print.h"
 #endif
 
 bool apic_init(){
 	char apic[4] = {'A', 'P', 'I', 'C'};
+	uint32 length;
 	MADT_t *madt = (MADT_t *)acpi_table(apic);
+	APICHeader_t *ah;
 	if (madt != null){
-		
+		length = (madt->h.length - sizeof(MADT_t) + 4);
+		ah = (APICHeader_t *)(&madt->ptr);
+		while (length > 0){
+#if DEBUG == 1
+			debug_print(DC_WGR, "APIC type: %d", ah->type);
+#endif
+			length -= ah->length;
+			ah = (APICHeader_t *)(((uint64)ah) + ah->length);
+		}
 	}
 }
 

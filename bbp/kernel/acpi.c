@@ -33,10 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "../config.h"
 #include "acpi.h"
 #include "lib.h"
 #include "io.h"
-#include "../config.h"
 #if DEBUG == 1
 	#include "debug_print.h"
 #endif
@@ -45,7 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 uint16 sx = 0;
 uint16 sy = 0;
 
-RSDP_t *rsdp = null;
+RSDP_t *_rsdp = null;
 
 /**
 * Calculate ACPI checksum
@@ -63,23 +63,23 @@ static uint8 acpi_checksum(uint8 *block, uint64 len){
 
 static bool acpi_find(){
 	const char sign[9] = "RSD PTR ";
-	if (rsdp == null){
-		rsdp = (RSDP_t *)0x80000; // We start at the beginning of EBDA
+	if (_rsdp == null){
+		_rsdp = (RSDP_t *)0x80000; // We start at the beginning of EBDA
 		do {
-			if (mem_compare((uint8 *)rsdp->signature, (uint8 *)sign, 8)){
-				if (rsdp->revision == 0){
-					if (acpi_checksum((uint8 *)rsdp, sizeof(uint8) * 20) == 0){ // Revision 1.0 checksum
+			if (mem_compare((uint8 *)_rsdp->signature, (uint8 *)sign, 8)){
+				if (_rsdp->revision == 0){
+					if (acpi_checksum((uint8 *)_rsdp, sizeof(uint8) * 20) == 0){ // Revision 1.0 checksum
 						return true;
 					}
 				} else {
-					if (acpi_checksum((uint8 *)rsdp, sizeof(RSDP_t)) == 0){ // Revision 2.0+ checksum
+					if (acpi_checksum((uint8 *)_rsdp, sizeof(RSDP_t)) == 0){ // Revision 2.0+ checksum
 						return true;
 					}
 				}
 			}
-			rsdp = (RSDP_t *)((uint64)rsdp + 0x10);
-		} while ((uint64)rsdp < 0x100000); // Up until 1MB mark
-		rsdp = null;
+			_rsdp = (RSDP_t *)((uint64)_rsdp + 0x10);
+		} while ((uint64)_rsdp < 0x100000); // Up until 1MB mark
+		_rsdp = null;
 	}
 	return false;
 }
@@ -98,29 +98,34 @@ bool acpi_init(){
 				}
 			}
 
-			FACS_t *facs = (FACS_t *)((uint64)fadt->firmware_ctrl);
+			//FACS_t *facs = (FACS_t *)((uint64)fadt->firmware_ctrl);
 			
-			DSDT_t *dsdt = (DSDT_t *)((uint64)fadt->dsdt);
+			//DSDT_t *dsdt = (DSDT_t *)((uint64)fadt->dsdt);
 			// TODO: parse DSDT
 
-			char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
-			SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
-			if (ssdt != null){
+			//char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
+			//SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
+			//if (ssdt != null){
 				// TODO: parse SSDT
-			}
+			//}
 			return true;
 		}
 	}
+	return false;
+}
+
+RSDP_t *acpi_rsdp(){
+	return _rsdp;
 }
 
 SDTHeader_t *acpi_table(const char signature[4]){
-	if (rsdp != null){
+	if (_rsdp != null){
 		SDTHeader_t *th;
 		uint32 i;
 		uint32 count;
-		if (rsdp->revision == 0){
+		if (_rsdp->revision == 0){
 			// ACPI version 1.0
-			RSDT_t *rsdt = (RSDT_t *)((uint64)rsdp->RSDT_address);
+			RSDT_t *rsdt = (RSDT_t *)((uint64)_rsdp->RSDT_address);
 			uint64 ptr;
 			// Get count of other table pointers
 			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
@@ -139,10 +144,10 @@ SDTHeader_t *acpi_table(const char signature[4]){
 			}
 		} else {
 			// ACPI version 2.0+
-			XSDT_t *xsdt = (XSDT_t *)rsdp->XSDT_address;
+			XSDT_t *xsdt = (XSDT_t *)_rsdp->XSDT_address;
 			uint64 ptr;
 			// Get count of other table pointers
-			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 4;
+			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 8;
 			for (i = 0; i < count; i ++){
 				// Get an address of table pointer array
 				ptr = (uint64)&xsdt->ptr;
@@ -160,3 +165,58 @@ SDTHeader_t *acpi_table(const char signature[4]){
 	}
 	return null;
 }
+
+#if DEBUG == 1
+void acpi_list(){
+	if (_rsdp != null){
+		SDTHeader_t *th;
+		uint32 i;
+		uint32 count;
+		char sign[5] = "";
+		
+		debug_print(DC_WB, "RSDP @%x", (uint64)_rsdp);
+
+		if (_rsdp->revision == 0){
+			// ACPI version 1.0
+			debug_print(DC_WB, "ACPI v1.0");
+			debug_print(DC_WB, "XSDT @%x", (uint64)_rsdp->RSDT_address);
+			
+			RSDT_t *rsdt = (RSDT_t *)((uint64)_rsdp->RSDT_address);
+			uint64 ptr;
+			// Get count of other table pointers
+			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint64)&rsdt->ptr;
+				// Move on to entry i (32bits = 4 bytes) in table pointer array
+				ptr += (i * 4);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)((uint64)(*((uint32 *)ptr)));
+				mem_fill((uint8 *)sign, 5, 0);
+				mem_copy((uint8 *)sign, 4, (uint8 *)th->signature);
+				debug_print(DC_WB, "%s @%x", sign, (uint64)th);
+			}
+		} else {
+			// ACPI version 2.0+
+			debug_print(DC_WB, "ACPI v2.0+");
+			debug_print(DC_WB, "XSDT @%x", _rsdp->XSDT_address);
+			
+			XSDT_t *xsdt = (XSDT_t *)_rsdp->XSDT_address;
+			uint64 ptr;
+			// Get count of other table pointers
+			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 8;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint64)&xsdt->ptr;
+				// Move on to entry i (64bits = 8 bytes) in table pointer array
+				ptr += (i * 8);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)(*((uint64 *)ptr));
+				mem_fill((uint8 *)sign, 5, 0);
+				mem_copy((uint8 *)sign, 4, (uint8 *)th->signature);
+				debug_print(DC_WB, "%s @%x", sign, (uint64)th);
+			}
+		}
+	}
+}
+#endif

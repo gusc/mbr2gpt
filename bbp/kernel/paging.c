@@ -34,6 +34,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "paging.h"
+#include "../config.h"
+
+/**
+* Page table structures
+*/
+static pm_t *pml4 = (pm_t *)PT_LOC; // a.k.a. PML4T
+static pm_t *pml3; // a.k.a. PTD (page directory table)
+static pm_t *pml2; // a.k.a. PD (page directory)
+static pm_t *pml1; // a.k.a. PT (page table)
 
 uint64 page_normalize_vaddr(uint64 vaddr){
 	vaddr_t va;
