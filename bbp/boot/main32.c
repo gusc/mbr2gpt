@@ -43,17 +43,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../config.h"
 
 /**
-* Page table structures
-*/
-static pm_t *pml4; // a.k.a. PML4T
-static pm_t *pml3; // a.k.a. PTD (page directory table)
-static pm_t *pml2; // a.k.a. PD (page directory)
-static pm_t *pml1; // a.k.a. PT (page table)
-/**
 * PML4 pointer (to be passed over to CR3)
-* @see boot16.asm
+* @see boot.asm
 */
 extern uint32 pml4_ptr32;
+/**
+* Page table structures
+*/
+pm_t *pml4; // a.k.a. PML4T (512GB per entry = 256TB total, this is a cabinet)
+pm_t *pml3; // a.k.a. PDPT (page directory pointer table, 1GB per entry, let's call this a drawer)
+pm_t *pml2; // a.k.a. PD (page directory, 2MB per entry)
+pm_t *pml1; // a.k.a. PT (page table, 4KB per entry)
+
 /**
 * Set value in memory
 * @param val - the value to set
@@ -110,14 +111,15 @@ static uint64 get_ram(e820map_t *mem_map){
 * @param ammount - ammount of memory to map
 */
 static void setup_pages(uint64 ammount){
-	uint64 d;
-	uint64 t;
 	uint64 p;
+	uint64 t;
+	uint64 d;
+	uint64 dr;
 	uint64 ptr;
 	
 	// Single page holds 4KB of RAM
 	uint64 page_count = ammount / 4096;
-	if (page_count % 4096 > 0){
+	if (ammount % 4096 > 0){
 		page_count ++;
 	}
 	// Single table entry holds 2MB of RAM
@@ -130,72 +132,77 @@ static void setup_pages(uint64 ammount){
 	if (table_count % 512 > 0){
 		dir_count ++;
 	}
-
-	// To map 2GB of RAM you'll need
-	// 524288 - page entries
-	// 1024 - table entries
-	// 2 - directory entries
-	// Single PML4 entry is enough to map 512GB of RAM
-
-	// To map 256MB of RAM
-	// 65536 - page entries
-	// 128 - table entries
-	// 1 - directory entry
-
+	// Single cabinet entry holds 512GB of RAM
+	uint64 drawer_count = dir_count / 512;
+	if (dir_count % 512 > 0){
+		drawer_count ++;
+	}
+	
 	// Position the page structures in memory
-	pml4 = (pm_t*)PT_LOC; // @0x00100000
-	pml3 = (pm_t*)(((uint32)pml4) + (sizeof(pm_t) * 512)); // @0x00101000
-	pml2 = (pm_t*)(((uint32)pml3) + (sizeof(pm_t) * 512)); // @0x00102000
-	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * (uint32)dir_count)); // @0x00103000
+	// Always located at 0x00100000 (1MB mark)
+	// Holds 512 entries, only 1st is active - enough to map 512GB
+	pml4 = (pm_t*)PT_LOC;
+	// Located at PML4 + (8 * 512)
+	// Holds 512 entries, each entry maps up to 1GB, table = 512GB
+	pml3 = (pm_t*)(((uint32)pml4) + (sizeof(pm_t) * 512));
+	// Located at PML3 + (8 * 512 * drawer_count)
+	// Holds 512 entries * directory_count, each entry maps up to 2MB, table = 1GB
+	pml2 = (pm_t*)(((uint32)pml3) + (sizeof(pm_t) * 512 * (uint32)drawer_count));
+	// Located at PML2 + (8 * 512 * directory count)
+	// Holds 512 entries * table_count, each entry maps 4KB, table = 2MB
+	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * (uint32)dir_count));
 	
 	// Clear memory region where the page tables will reside
 	mem_set(0, (uint8 *)pml4, sizeof(pm_t) * 512);
-	mem_set(0, (uint8 *)pml3, sizeof(pm_t) * 512);
+	mem_set(0, (uint8 *)pml3, sizeof(pm_t) * 512 * drawer_count);
 	mem_set(0, (uint8 *)pml2, sizeof(pm_t) * 512 * dir_count);
 	mem_set(0, (uint8 *)pml1, sizeof(pm_t) * 512 * table_count);
 
-	// Set up pages, tables and directories
+	// Set up pages, tables, directories and drawers in the cabinet :)
 	for (p = 0; p < page_count; p ++){
-		pml1[p].raw = (p * 4096) & PAGE_MASK;
+		ptr = (uint64)(p * 4096);
+		pml1[p].raw = ptr & PAGE_MASK;
 		pml1[p].s.present = 1;
 		pml1[p].s.writable = 1;
+		pml1[p].s.write_through = 1;
+		//pml1[p].s.cache_disable = 1;
+		//pml1[p].s.global = 1;
 	}
 	for (t = 0; t < table_count; t ++){
 		ptr = (uint64)(((uint32)pml1) + (sizeof(pm_t) * 512 * t));
 		pml2[t].raw = ptr & PAGE_MASK;
 		pml2[t].s.present = 1;
 		pml2[t].s.writable = 1;
+		pml2[t].s.write_through = 1;
+		//pml2[t].s.cache_disable = 1;
 	}
 	for (d = 0; d < dir_count; d ++){
 		ptr = (uint64)(((uint32)pml2) + (sizeof(pm_t) * 512 * d));
 		pml3[d].raw = ptr & PAGE_MASK;
 		pml3[d].s.present = 1;
 		pml3[d].s.writable = 1;
+		pml3[d].s.write_through = 1;
+		//pml3[d].s.cache_disable = 1;
 	}
-	// Point first PML4 entry to PML3 table
-	ptr = (uint64)((uint32)pml3);
-	pml4[0].raw = ptr & PAGE_MASK;
-	pml4[0].s.present = 1;
-	pml4[0].s.writable = 1;
-	
+	for (dr = 0; dr < drawer_count; dr ++){
+		// Point first PML4 entry to PML3 table
+		ptr = (uint64)(((uint32)pml3) + (sizeof(pm_t) * 512 * dr));
+		pml4[dr].raw = ptr & PAGE_MASK;
+		pml4[dr].s.present = 1;
+		pml4[dr].s.writable = 1;
+		pml4[dr].s.write_through = 1;
+		//pml4[0].s.cache_disable = 1;
+	}
+
 	// Set PML4 pointer address
-	pml4_ptr32 = (uint32)pml4;
+	pml4_ptr32 = (uint32)pml4; // Point to our cabinet :)
 }
 
 /**
 * Initialize Protected Mode
 */
 void main32(){
-	
-#if DEBUG == 1 && VIDEOMODE == 1
-	// Print out the first visible message
-	char *vm = (char *)VIDEOMEM_LOC;
-	vm[0] = 'P';
-	vm[1] = 0x05;
-	vm[2] = 'M';
-	vm[3] = 0x05;
-#endif
-
+	// This is where main16.c loaded E820 memory map
 	e820map_t *mem_map = (e820map_t *)E820_LOC;
 	// Sort memory map
 	sort_e820(mem_map);

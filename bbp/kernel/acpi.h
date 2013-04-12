@@ -263,12 +263,12 @@ struct LocalNMI_struct {
 typedef struct LocalNMI_struct LocalNMI_t;
 
 /**
-* Scan through memory and locate RSDP.
-* @return pointer to RSDP structure in memory
+* Initialize ACPI
+* @return true on success, false on failure (if ACPI is not supported)
 */
-RSDP_t *acpi_find();
+bool acpi_init();
 /**
-* Locate ACPI table - you must run acpi_find() first
+* Locate ACPI table - you must run acpi_init() first
 * @param [in] signature - table signature (table name)
 * @return pointer to table header (from here on you can locate all the other data)
 */

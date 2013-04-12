@@ -35,6 +35,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "acpi.h"
 #include "lib.h"
+#include "io.h"
+#include "../config.h"
+#if DEBUG == 1
+	#include "debug_print.h"
+#endif
+
+// Global cursor position
+uint16 sx = 0;
+uint16 sy = 0;
 
 RSDP_t *rsdp = null;
 
@@ -52,7 +61,7 @@ static uint8 acpi_checksum(uint8 *block, uint64 len){
 	return (uint8)(sum);
 }
 
-RSDP_t *acpi_find(){
+static bool acpi_find(){
 	const char sign[9] = "RSD PTR ";
 	if (rsdp == null){
 		rsdp = (RSDP_t *)0x80000; // We start at the beginning of EBDA
@@ -60,11 +69,11 @@ RSDP_t *acpi_find(){
 			if (mem_compare((uint8 *)rsdp->signature, (uint8 *)sign, 8)){
 				if (rsdp->revision == 0){
 					if (acpi_checksum((uint8 *)rsdp, sizeof(uint8) * 20) == 0){ // Revision 1.0 checksum
-						return rsdp;
+						return true;
 					}
 				} else {
 					if (acpi_checksum((uint8 *)rsdp, sizeof(RSDP_t)) == 0){ // Revision 2.0+ checksum
-						return rsdp;
+						return true;
 					}
 				}
 			}
@@ -72,7 +81,36 @@ RSDP_t *acpi_find(){
 		} while ((uint64)rsdp < 0x100000); // Up until 1MB mark
 		rsdp = null;
 	}
-	return rsdp;
+	return false;
+}
+
+bool acpi_init(){
+	if (acpi_find()){
+		char facp[4] = {'F', 'A', 'C', 'P'};
+		FADT_t *fadt = (FADT_t *)acpi_table(facp);
+		if (fadt != null){
+			// Enable ACPI
+			if ((fadt->pm1a_control_block & 0x1) == 0){ // Only if SCI_EN is not set
+				if (fadt->smi_command_port > 0){ // and SMI_CMD is set
+					if (fadt->acpi_enable > 0){ // and ACPI_ENABLE is set
+						outb((uint16)fadt->smi_command_port, fadt->acpi_enable);
+					}
+				}
+			}
+
+			FACS_t *facs = (FACS_t *)((uint64)fadt->firmware_ctrl);
+			
+			DSDT_t *dsdt = (DSDT_t *)((uint64)fadt->dsdt);
+			// TODO: parse DSDT
+
+			char ssdt_sig[4] = {'S', 'S', 'D', 'T'};
+			SSDT_t *ssdt = (SSDT_t *)acpi_table(ssdt_sig);
+			if (ssdt != null){
+				// TODO: parse SSDT
+			}
+			return true;
+		}
+	}
 }
 
 SDTHeader_t *acpi_table(const char signature[4]){

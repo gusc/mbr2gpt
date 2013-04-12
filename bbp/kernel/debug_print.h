@@ -1,9 +1,11 @@
 /*
 
-Kernel entry point
-==================
+Helper functions for operations with teletype (text mode) screen
+================================================================
 
-This is where the fun part begins
+Teletype video functions:
+	* clear screen
+	* print a formated string on the screen
 
 License (BSD-3)
 ===============
@@ -35,39 +37,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef __kmain_h
-#define __kmain_h
+#ifndef __video_h
+#define __video_h
 
 #include "common.h"
 
-/**
-* Memory type codes for E820
-*/
-enum eMemType {
-	kMemOk = 1,			// Normal memory - usable
-	kMemReserved,		// Reserved memory - unusable
-	kMemACPIReclaim,	// ACPI reclaimable memory - might be usable after ACPI is taken care of
-	kMemACPI,			// ACPI NVS memory - unusable
-	kMemBad				// Bad memory - unsuable
-};
-/**
-* E820 memory map entry structure
-*/
-struct e820entry_struct {
-	uint16 entry_size;	// if 24, then it has attributes
-	uint64 base;
-	uint64 length;
-	uint32 type;
-	uint32 attributes;	// ACPI 3.0 only
-} __PACKED;
-typedef struct e820entry_struct e820entry_t;
-/**
-* E820 memory map structure
-*/
-struct e820map_struct {
-	uint16 size;
-	e820entry_t entries[];
-} __PACKED;
-typedef struct e820map_struct e820map_t;
+// Some fancy color definitions :)
+#define DC_WB 0xF0
+#define DC_BW 0x0F
+#define DC_WLG 0xF7
+#define DC_WDG 0xF8
+#define DC_WBL 0xF1
+#define DC_WGR 0xF2
+#define DC_WRD 0xF4
 
-#endif /* __kmain_h */
+/**
+* Clear the teletype (text mode) screen
+* @param color - color byte
+* @return void
+*/
+void debug_clear(uint8 color);
+/**
+* Scroll whole video buffer upwards
+* @return void
+*/
+void debug_scroll();
+/**
+* Print a formated string on the teletype (text mode) screen
+* @param x coordinate (a.k.a. column 0-79)
+* @param y coordinate (a.k.a. line 0-24)
+* @param color - color byte
+* @param [in] format - standard C printf format string
+* @param [in] ... - additional arguments
+* @return void
+*/
+void debug_print_at(uint8 x, uint8 y, uint8 color, const char *format, ...);
+/**
+* Print a formated string on the teletype (text mode) screen
+* @param color - color byte
+* @param [in] format - standard C printf format string
+* @param [in] ... - additional arguments
+* @return void
+*/
+void debug_print(uint8 color, const char *format, ...);
+
+#endif /* __video_h */

@@ -25,8 +25,12 @@
     <ClCompile Include="boot\main16.c" />
     <ClCompile Include="boot\main32.c" />
     <ClCompile Include="kernel\acpi.c" />
+    <ClCompile Include="kernel\apic.c" />
+    <ClCompile Include="kernel\debug_print.c" />
+    <ClCompile Include="kernel\interrupts.c" />
     <ClCompile Include="kernel\kmain.c" />
     <ClCompile Include="kernel\lib.c" />
+    <ClCompile Include="kernel\paging.c" />
     <ClCompile Include="kernel\pci.c" />
     <ClCompile Include="kernel\video.c" />
   </ItemGroup>
@@ -52,13 +56,16 @@
     <ClInclude Include="boot\main32.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="kernel\acpi.h" />
+    <ClInclude Include="kernel\apic.h" />
     <ClInclude Include="kernel\common.h" />
     <ClInclude Include="kernel\cpuid.h" />
+    <ClInclude Include="kernel\debug_print.h" />
     <ClInclude Include="kernel\interrupts.h" />
     <ClInclude Include="kernel\io.h" />
     <ClInclude Include="kernel\kmain.h" />
     <ClInclude Include="kernel\lib.h" />
     <ClInclude Include="kernel\msr.h" />
+    <ClInclude Include="kernel\paging.h" />
     <ClInclude Include="kernel\pci.h" />
     <ClInclude Include="kernel\video.h" />
   </ItemGroup>

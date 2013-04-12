@@ -38,88 +38,106 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "../config.h"
-#include "video.h"
+#include "debug_print.h"
 #include "lib.h"
 
-uint8 vcolumns = 80;
-uint8 vrows = 25;
-uint64 vrow_offset = 0;
+// Video screen size
+static uint64 _columns = 80;
+static uint64 _rows = 25;
+// Something I forgot
+static uint64 _row_offset = 0;
+// Global cursor
+static uint64 _x = 0;
+static uint64 _y = 0;
+static uint8 _base_color = 0x00;
 
-void video_clear(uint8 color){
-#if VIDEOMODE == 1
+static void __debug_print_f(uint8 x, uint8 y, uint8 color, const char *format, va_list args);
+
+void debug_clear(uint8 color){
 	char *vidmem = (char *)VIDEOMEM_LOC;
-	uint16 i = 0;
-	uint8 columns = 80;
-	uint8 lines = 25;
-	while (i < (columns * lines * 2)){
+	_base_color = color;
+	uint64 i = 0;
+	while (i < (_columns * _rows * 2)){
 		vidmem[i] = ' ';
 		i ++;
 		vidmem[i] = color;
 		i ++;
 	}
-#endif
 }
-void video_scroll(uint8 color){
-#if VIDEOMODE == 1
+
+void debug_scroll(){
 	char *vidmem = (char *)VIDEOMEM_LOC;
 	uint8 c;
 	uint8 r;
 	uint16 i;
 	uint16 p;
 	// Scroll the screen
-	for (r = 1; r < vrows; r ++){
-		for (c = 0; c < vcolumns; c ++){
+	for (r = 1; r < _rows; r ++){
+		for (c = 0; c < _columns; c ++){
 			// Clear previous line
-			p = ((r - 1) * vcolumns * 2) + (c * 2);
+			p = ((r - 1) * _columns * 2) + (c * 2);
 			vidmem[p] = ' ';
-			vidmem[p + 1] = color;
+			vidmem[p + 1] = _base_color;
 			// Copy current line
-			i = (r * vcolumns * 2) + (c * 2);
+			i = (r * _columns * 2) + (c * 2);
 			vidmem[p] = vidmem[i];
 			vidmem[p + 1] = vidmem[i + 1];
 		}
 	}
 	// Clear the last line
-	r = vrows - 1;
-	for (c = 0; c < vcolumns; c ++){
-		i = (r * vcolumns * 2) + (c * 2);
+	r = _rows - 1;
+	for (c = 0; c < _columns; c ++){
+		i = (r * _columns * 2) + (c * 2);
 		vidmem[i] = ' ';
-		vidmem[i + 1] = color;
+		vidmem[i + 1] = _base_color;
 	}
-	vrow_offset ++;
-#endif
+	_row_offset ++;
 }
-void video_print(uint8 x, uint8 y, uint8 color, const char *format, ...){
-#if VIDEOMODE == 1
+
+void debug_print_at(uint8 x, uint8 y, uint8 color, const char *format, ...){
+	va_list args;
+	va_start(args, format);
+	__debug_print_f(x, y, color, format, args);
+	va_end(args);
+}
+
+void debug_print(uint8 color, const char *format, ...){
+	if (_y >= _rows){
+		debug_scroll();
+		_y = _rows - 1;
+	}
+	va_list args;
+	va_start(args, format);
+	__debug_print_f(_x, _y, color, format, args);
+	va_end(args);
+	_y ++;
+}
+
+static void __debug_print_f(uint8 x, uint8 y, uint8 color, const char *format, va_list args){
 	char *vidmem = (char *)VIDEOMEM_LOC;
-	static char str[4000];
-	char *s = (char *)format;
-	mem_fill((uint8 *)str, 2000, 0);
+	static char str[2001];
+	mem_fill((uint8 *)str, 2001, 0);
 	uint16 i;
 	// Keep everything in bounds
-	y = y - vrow_offset;
-	//va_list args;
-	//va_start(args, format);
-	//if (__write_f(str, 2000, format, args)){
-		// Write to screen only if there's any thing to write at all
+	y = y - _row_offset;
+	if (__write_f(str, 2000, format, args)){
+		char *s = (char *)str;
 		while (*s != 0){
-			if (*s == 0x0A || x >= vcolumns){ // New line (a.k.a \n) or forced wrap
+			if (*s == 0x0A || x >= _columns){ // New line (a.k.a \n) or forced wrap
 				x = 0;
 				y ++;
-			}
-			if (y >= vrows){
-				video_scroll(color);
-				y = vrows - 1;
+				if (y >= _rows){
+					debug_scroll();
+					y = _rows - 1;
+				}
 			}
 			if (*s >= 0x20 && *s <= 0x7E){ // Only valid ASCII chars
-				i = (y * vcolumns * 2) + (x * 2);
+				i = (y * _columns * 2) + (x * 2);
 				vidmem[i] = *s;
 				vidmem[i + 1] = color;
 				x ++;
 			}
 			s++;
 		}
-	//}
-	//va_end(args);
-#endif
+	}
 }

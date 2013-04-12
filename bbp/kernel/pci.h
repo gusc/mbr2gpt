@@ -61,6 +61,10 @@ typedef union {
 } pci_addr_t;
 
 /**
+* Enumerate PCI bus
+*/
+void pci_init();
+/**
 * Read from PCI bus/device
 * @param addr [in] - PCI address (bus, device, function, register)
 * @return register value

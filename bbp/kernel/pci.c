@@ -37,6 +37,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pci.h"
 #include "io.h"
 
+void pci_init(){
+	uint16 bus;
+	uint8 device;
+	uint32 data;
+	uint16 vendor_id;
+	uint8 class_id;
+	uint8 subclass_id;
+	pci_addr_t addr;
+	addr.raw = 0;
+	addr.s.enabled = 1;
+	// Bruteforce for now
+	for (bus = 0; bus < 256; bus ++){
+		for (device = 0; device < 32; device ++){
+			addr.s.bus = bus;
+			addr.s.device = device;
+			addr.s.reg = 0;
+			data = pci_read(&addr);
+			vendor_id = (uint16)(data >> 8);
+			if (vendor_id != 0xFFFF){
+				addr.s.reg = 0x8;
+				data = pci_read(&addr);
+				class_id = (uint8)data;
+				subclass_id = (uint8)(data >> 8);
+			}
+		}
+	}
+}
+
 uint32 pci_read(pci_addr_t *addr){
 	uint32 data;
 	outd(PCI_CONFIG_ADDRESS, addr->raw);

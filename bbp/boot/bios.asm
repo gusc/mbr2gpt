@@ -37,7 +37,8 @@
 [section .text]
 [global set_video_mode]							; Export void set_video_mode(uint16 mode) to C
 [global set_svga_mode]							; Export void set_svga_mode(uint16 mode) to C
-[global enable_a20]								; Export uint32 enable_a20() to C
+[global enable_a20]								; Export void enable_a20() to C
+[global check_a20]								; Export uint16 check_a20() to C
 [global read_e820]								; Export void read_e820(e820map_t *mem_map) to C
 
 [bits 16]										; Real mode
@@ -70,8 +71,12 @@ set_svga_mode:									; Set SuperVGA video mode
 
 enable_a20:										; Enable A20 Gate to access high memory in protected mode (Fast A20)
 	in al, 0x92									; read from io port 0x92
-	test al, 0x02								; do some test
-	out 0x90, al								; write to io port 0x90
+	mov cl, al
+	and cl, 2									; test if bit 2 is not set
+	jnz .ret									; if it's set, then we're skipping
+	or al, 2									; set 2nd bit to 1
+	out 0x92, al								; write back to port 0x92
+.ret:
 	ret											; return to callee
 
 read_e820:										; Read E820 Memory map

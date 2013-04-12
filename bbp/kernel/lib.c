@@ -185,35 +185,65 @@ uint64 str_read_f(const char *src, const char *format, ...){
 //
 
 uint64 __write_f(char *dest, uint64 len, const char *format, va_list args){
-	uint64 fm_len = str_length(format);
-	uint64 ret = 0;
-	uint8 a = 0;
 	char *f = (char *)format;
-	while (len-- && fm_len--){
+	char *d = (char *)dest;
+	uint64 ret = 0;
+	
+	// Temporary value variables
+	uint64 val_len;
+	int64 val_int64;
+	uint64 val_uint64;
+	char val_char;
+	char *val_str;
+	
+	while (*f && ret < len){
 		if (*f == '%'){ // possible specifier
 			switch (*(f + 1)){
 				case 'd': // integer
-					
+					val_int64 = va_arg(args, int64);
+					val_len = int_to_str(d, MAX_INT_STR, val_int64, 10); 
+					d += val_len;
+					ret += val_len;
+					f ++;
 					break;
 				case 'u': // unsigned integer
-					
+					val_uint64 = va_arg(args, uint64);
+					val_len = int_to_str(d, MAX_INT_STR, val_uint64, 10); 
+					d += val_len;
+					ret += val_len;
+					f ++;
 					break;
-				case 'x': // hex
-
+				case 'x': // unsigned integer in hex
+					val_uint64 = va_arg(args, uint64);
+					val_len = int_to_str(d, MAX_INT_STR, val_uint64, 16); 
+					d += val_len;
+					ret += val_len;
+					f ++;
+					break;
+				case 'c': // char
+					val_char = (char)va_arg(args, int64); // chars are promoted to int in va_list
+					*(d++) = val_char;
+					ret ++;
+					f ++;
 					break;
 				case 's': // string
-
+					val_str = (char *)va_arg(args, uint64);
+					while (*val_str){
+						*(d ++) = *(val_str ++);
+						ret ++;
+					}
+					f ++;
 					break;
 				default: // not a specifier
-					*(dest++) = *f;
-					*(dest++) = *(f + 1);
+					*(d ++) = *f;
+					ret ++;
 					break;
 			}
-			f += 2;
+			f ++;
 		} else { // copy string
-			*(dest++)=*(f++);
+			*(d ++) = *(f ++);
+			ret ++;
 		}
-		ret ++;
 	}
 	return ret;
 }

@@ -1,11 +1,7 @@
 /*
 
-Helper functions for operations with teletype (text mode) screen
-================================================================
-
-Teletype video functions:
-	* clear screen
-	* print a formated string on the screen
+APIC, xAPIC, x2APIC functions
+=============================
 
 License (BSD-3)
 ===============
@@ -37,32 +33,44 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef __video_h
-#define __video_h
+#include "apic.h"
+#include "msr.h"
+#include "acpi.h"
+#include "../config.h"
+#if DEBUG == 1
+	#include "debug_print.h"
+#endif
 
-#include "common.h"
+bool apic_init(){
+	char apic[4] = {'A', 'P', 'I', 'C'};
+	MADT_t *madt = (MADT_t *)acpi_table(apic);
+	if (madt != null){
+		
+	}
+}
 
-/**
-* Clear the teletype (text mode) screen
-* @param color - color byte
-* @return void
-*/
-void video_clear(uint8 color);
-/**
-* Scroll whole video buffer upwards
-* @param color - color byte
-* @return void
-*/
-void video_scroll(uint8 color);
-/**
-* Print a formated string on the teletype (text mode) screen
-* @param x coordinate (a.k.a. column 0-79)
-* @param y coordinate (a.k.a. line 0-24)
-* @param color - color byte
-* @param [in] format - standard C printf format string
-* @param [in] ... - additional arguments
-* @return void
-*/
-void video_print(uint8 x, uint8 y, uint8 color, const char *format, ...);
+apic_base_t apic_get_base(){
+	apic_base_t addr;
+	uint32 low, high;
+	msr_read(MSR_IA32_APIC_BASE, &low, &high);
+	addr.raw = (low & 0xFFFFF000) | ((uint64)(high & 0x0F) << 32);
+	return addr;
+}
 
-#endif /* __video_h */
+void apic_set_base(apic_base_t addr){
+	uint32 low = (addr.raw & 0xFFFFF000) | 0x800;
+	uint32 high = (addr.raw >> 32) & 0x0F;
+	msr_write(MSR_IA32_APIC_BASE, low, high);
+}
+
+uint32 apic_read_ioapic(apic_base_t addr, uint32 reg){
+	uint32 volatile *ioapic = (uint32 volatile *)(addr.raw);
+	ioapic[0] = (reg & 0xFFFF);
+	return ioapic[4];
+}
+
+void apic_write_ioapic(apic_base_t addr, uint32 reg, uint32 data){
+	uint32 volatile *ioapic = (uint32 volatile *)(addr.raw);
+	ioapic[0] = (reg & 0xFFFF);
+	ioapic[4] = data;
+}

@@ -79,7 +79,6 @@ typedef struct e820map_struct e820map_t;
 */
 
 typedef union {
-	uint64 raw;							// Raw value
 	struct {
 		uint64 present			: 1;	// Is the page present in memory?
 		uint64 writable			: 1;	// Is the page writable?
@@ -93,8 +92,9 @@ typedef union {
 		uint64 data				: 3;	// Available for kernel use (do what you want?)
 		uint64 frame			: 52;	// Frame address (shifted right 12 bits)
 	} s;
+	uint64 raw;							// Raw value
 } pm_t;
 
-#define PAGE_MASK		0xFFFFF000;
+#define PAGE_MASK		0xFFFFFFFFF000;
 
 #endif /* __main32_h */

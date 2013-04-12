@@ -61,6 +61,11 @@ extern void set_svga_mode(uint16 mode);
 */
 extern void enable_a20();
 /**
+* Check if A20 gate is open already
+* @see bios.asm
+*/
+extern uint16 check_a20();
+/**
 * Read E820 memory map
 * @see bios.asm
 * @param mem_map - e820 memory map structure pointer
@@ -72,13 +77,16 @@ extern uint32 read_e820(e820map_t *mem_map);
 * Initialize Real Mode
 */
 void main16(){
+	// This a static location (see config.h)
 	e820map_t *mem_map = (e820map_t *)E820_LOC;
 
 	// Setup video mode
-#if VIDEOMODE == 1
+#if DEBUG == 1
+	#if VIDEOMODE == 1
 	set_video_mode(0x03); // Teletype
-#elif VIDEOMODE == 2
+	#elif VIDEOMODE == 2
 	set_svga_mode(0x011B); // 1280x1024 (24 bit) 
+	#endif
 #endif
 
 	// Enable A20 gate

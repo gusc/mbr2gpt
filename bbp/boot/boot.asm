@@ -77,10 +77,12 @@ start16:										; Boot entry point
 
 	; Enter Protected mode
 	lgdt [gdt32_ptr]							; load 32bit GDT pointer
+	
 	mov eax, cr0								; read from CR0
 	or eax, 0x00000001							; set Protected Mode bit
 	mov cr0, eax								; write to CR0
-	jmp 0x8:start32								; do the magic jump to finalize Protected Mode setup
+	
+	jmp 0x08:start32							; do the magic jump to finalize Protected Mode setup
 
 [bits 32]										; Protected mode
 
@@ -104,36 +106,36 @@ start32:										; Protected mode entry point
 	call main32									; call C function main32() (see: boot/main32.c)
 
 	; Disable all IRQs
-	;mov al, 0xFF								; set out 0xFF to 0xA1 and 0x21 to disable all IRQs
-	;out 0xA1, al
-	;out 0x21, al
-
-	; Pause
-	;nop
-	;nop
-
-	; Load IDT (empty pointer for now  so that any NMI causes a triple fault)										
-	;lidt [idt_ptr]								; load 32bit IDT pointer
+	mov al, 0xFF								; set out 0xFF to 0xA1 and 0x21 to disable all IRQs
+	out 0xA1, al
+	out 0x21, al
 
 	; Setup long mode.
 	mov eax, cr0								; read from CR0
 	and eax, 0x7FFFFFFF							; clear paging bit
 	mov cr0, eax								; write to CR0
-	mov eax, [pml4_ptr32]						; point eax to PML4 pointer location
-	mov cr3, eax								; save PML4 pointer into CR3
+	
 	mov eax, cr4								; read from CR4
 	or eax, 0x000000A0							; set the PAE and PGE bit
 	mov cr4, eax								; write to CR4
+
+	mov eax, [pml4_ptr32]						; point eax to PML4 pointer location
+	or eax, 0x0000000B							; enable write-through
+	mov cr3, eax								; save PML4 pointer into CR3
+	
 	mov ecx, 0xC0000080							; read from the EFER MSR
 	rdmsr										; read MSR
-	or eax, 0x00000100							; set the LME bit
+	or eax, 0x00000101							; set the LME and SYSCALL/SYSRET bits
 	wrmsr										; write MSR
-	mov eax, cr0								; read from CR0
-	or eax,0x80000000							; set paging bit
-	mov cr0, eax								; write to CR0
-	lgdt [gdt64_ptr]							; load 64bit GDT pointer
-	jmp 0x8:start64								; do the magic jump to Long Mode
 
+	lgdt [gdt64_ptr]							; load 64bit GDT pointer
+	
+	mov eax, cr0								; read from CR0
+	or eax, 0x80000000							; set paging bit
+	mov cr0, eax								; write to CR0
+	jmp 0x08:start64							; do the magic jump to Long Mode
+
+align 16
 [bits 64]										; Long mode
 
 start64:										; Long Mode entry point
@@ -160,22 +162,13 @@ start64:										; Long Mode entry point
 	mov fs, ax
 	mov gs, ax
 
-	;sti											; enable interrupts
 	call kmain									; call C function kmain() (see: kernel/kmain.c)
-	;cli											; disable interrupts
+	cli											; disable interrupts
 	jmp $										; hang
 
 [section .data]
 
-;[global idt]									; Make IDT accessible from C
-;[global idt_ptr]								; Make IDT pointer accessible from C
 [global pml4_ptr32]								; Make PML4 pointer accessible from C
-
-; IDT pointer (zero-pointer)
-;idt_ptr:
-;	dw 0										; Limit (size)
-;	dd 0										; Base (location)
-;idt_ptr_end:
 
 ; PML4 pointer (for 32bit CR3)
 pml4_ptr32:
@@ -221,6 +214,7 @@ gdt32_ptr:
 gdt32_ptr_end:
 
 ; 64bit GDT
+align 16
 gdt64:
 ; Null Descriptor (selector: 0x00)
 .null_desc:
@@ -233,7 +227,7 @@ gdt64:
 
 ; Code Descriptor (selector: 0x08)
 .code_desc:
-	dw 0xffff									; 0:15 - Limit
+	dw 0x0000									; 0:15 - Limit
 	dw 0x0000									; 16:31 - Base (low word)
 	db 0x00										; 32:39 - Base (high word low byte)
 	;  P|DPL|DPL|1|1|C|R|A
@@ -244,7 +238,7 @@ gdt64:
 
 ; Data Descriptor (selector: 0x10)
 .data_desc:
-	dw 0xffff									; 0:15 - Limit
+	dw 0x0000									; 0:15 - Limit
 	dw 0x0000									; 16:31 - Base (low word)
 	db 0x00										; 32:39 - Base (high word low byte)
 	db 10010000b								; 40:47 - Access byte
@@ -252,6 +246,7 @@ gdt64:
 	db 0x00										; 56:64 - Base (high word high byte)
 gdt64_end:
 
+align 16
 gdt64_ptr:
 	dw (gdt64_end - gdt64 - 1)					; Limit (size)
 	dq (gdt64 + 0x0000000000000000)				; Base (location)

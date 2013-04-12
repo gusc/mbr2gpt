@@ -109,6 +109,10 @@ struct idt_ptr_struct {
 */
 typedef struct idt_ptr_struct idt_ptr_t;
 /**
+* Initialize interrupt handlers
+*/
+void interrupt_init();
+/**
 * Set IDT pointer
 * @see interrupts.asm
 * @param idt_ptr - an address of IDT pointer structure in memory

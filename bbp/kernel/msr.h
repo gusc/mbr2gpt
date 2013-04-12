@@ -40,7 +40,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common.h"
 
+//
 // MSR macros (Core2+)
+//
+
 #define MSR_IA32_P5_MC_ADDR 0x0
 #define MSR_IA32_P5_MC_TYPE 0x1
 #define MSR_IA32_APIC_BASE 0x1B
@@ -108,7 +111,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * @param [out] hi - high dword
 * @return void
 */
-void __INLINE msr_read(uint32 msr, uint32 *lo, uint32 *hi){
+static void msr_read(uint32 msr, uint32 *lo, uint32 *hi){
    asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
 }
 /**
@@ -118,7 +121,7 @@ void __INLINE msr_read(uint32 msr, uint32 *lo, uint32 *hi){
 * @param [in] hi - high dword
 * @return void
 */
-void __INLINE msr_write(uint32 msr, uint32 lo, uint32 hi){
+static void msr_write(uint32 msr, uint32 lo, uint32 hi){
    asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
