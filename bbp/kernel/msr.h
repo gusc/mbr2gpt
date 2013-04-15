@@ -107,22 +107,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
 * Read MSR value
 * @param msr - Model Specific Register
-* @param [out] lo - low dword
-* @param [out] hi - high dword
+* @param [out] val - pointer to memory location where to write MSR value
 * @return void
 */
-static void msr_read(uint32 msr, uint32 *lo, uint32 *hi){
-   asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
+static void msr_read(uint32 msr, uint64 *val){
+	split_uint64_t *v = (split_uint64_t *)val;
+	asm volatile("rdmsr" : "=a"(v->low), "=d"(v->high) : "c"(msr));
 }
 /**
 * Write MSR value
 * @param msr - Model Specific Register
-* @param [in] lo - low dword
-* @param [in] hi - high dword
+* @param [in] val - value to write into MSR
 * @return void
 */
-static void msr_write(uint32 msr, uint32 lo, uint32 hi){
-   asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
+static void msr_write(uint32 msr, uint64 val){
+	split_uint64_t *v = (split_uint64_t *)&val;
+	asm volatile("wrmsr" : : "a"(v->low), "d"(v->high), "c"(msr));
 }
 
 #endif

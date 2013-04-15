@@ -209,7 +209,7 @@ typedef struct FADT_struct FADT_t;
 */
 struct MADT_struct {
 	SDTHeader_t h;
-	uint32 lapic_add;			// Physical address of local APIC
+	uint32 lapic_addr;			// Physical address of local APIC
 	uint32 flags;				// Flags
 	uint32 ptr;					// Local, IO and other APIC structures (we use it as an offset)
 } __PACKED;

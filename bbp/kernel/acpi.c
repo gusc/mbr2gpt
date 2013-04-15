@@ -198,7 +198,7 @@ void acpi_list(){
 			}
 		} else {
 			// ACPI version 2.0+
-			debug_print(DC_WB, "ACPI v2.0+");
+			debug_print(DC_WB, "ACPI v%d", (uint32)_rsdp->revision);
 			debug_print(DC_WB, "XSDT @%x", _rsdp->XSDT_address);
 			
 			XSDT_t *xsdt = (XSDT_t *)_rsdp->XSDT_address;
