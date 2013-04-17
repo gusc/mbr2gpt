@@ -12,3 +12,6 @@
 /doc
 /Logs
 /*.vbox-prev
+/*.vmsd
+/*.nvram
+/vmware*

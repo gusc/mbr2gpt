@@ -41,6 +41,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#include "debug_print.h"
 #endif
 
+//#define MAX_LAPIC
+
+//LocalAPIC_t *lapic[
+
 bool apic_init(){
 	char apic[4] = {'A', 'P', 'I', 'C'};
 	uint32 length;
@@ -48,14 +52,18 @@ bool apic_init(){
 	APICHeader_t *ah;
 	if (madt != null){
 		length = (madt->h.length - sizeof(MADT_t) + 4);
+#if DEBUG == 1
+			debug_print(DC_WGR, "APIC size: %d", length);
+#endif
 		ah = (APICHeader_t *)(&madt->ptr);
-		while (length > 0){
+		/*while (length > 0){
 #if DEBUG == 1
 			debug_print(DC_WGR, "APIC type: %d", ah->type);
 #endif
+
 			length -= ah->length;
 			ah = (APICHeader_t *)(((uint64)ah) + ah->length);
-		}
+		}*/
 	}
 }
 
