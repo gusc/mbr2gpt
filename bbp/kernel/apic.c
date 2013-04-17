@@ -41,9 +41,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#include "debug_print.h"
 #endif
 
-//#define MAX_LAPIC
+static void lapic_init(LocalAPIC_t *lapic){
+	if ((lapic->flags & 1) != 0){
+		apic_base_t apic = apic_get_base();
+		apic.s.enable = 1;
+		apic_set_base(apic);
+		apic = apic_get_base();
+#if DEBUG == 1
+		debug_print(DC_WB, "%x", apic.raw);
+#endif
+	}
+}
 
-//LocalAPIC_t *lapic[
+static void ioapic_init(IOAPIC_t *ioapic){
+#if DEBUG == 1
+	debug_print(DC_WB, "%x", ioapic->apic_addr);
+#endif
+}
 
 bool apic_init(){
 	char apic[4] = {'A', 'P', 'I', 'C'};
@@ -52,33 +66,33 @@ bool apic_init(){
 	APICHeader_t *ah;
 	if (madt != null){
 		length = (madt->h.length - sizeof(MADT_t) + 4);
-#if DEBUG == 1
-			debug_print(DC_WGR, "APIC size: %d", length);
-#endif
 		ah = (APICHeader_t *)(&madt->ptr);
-		/*while (length > 0){
+		while (length > 0){
 #if DEBUG == 1
 			debug_print(DC_WGR, "APIC type: %d", ah->type);
 #endif
-
+			switch (ah->type){
+				case APIC_TYPE_LAPIC:
+					lapic_init((LocalAPIC_t *)ah);
+					break;
+				case APIC_TYPE_IOAPIC:
+					ioapic_init((IOAPIC_t *)ah);
+					break;
+			}
 			length -= ah->length;
 			ah = (APICHeader_t *)(((uint64)ah) + ah->length);
-		}*/
+		}
 	}
 }
 
 apic_base_t apic_get_base(){
 	apic_base_t addr;
-	uint32 low, high;
-	msr_read(MSR_IA32_APIC_BASE, &low, &high);
-	addr.raw = (low & 0xFFFFF000) | ((uint64)(high & 0x0F) << 32);
+	msr_read(MSR_IA32_APIC_BASE, &addr.raw);
 	return addr;
 }
 
 void apic_set_base(apic_base_t addr){
-	uint32 low = (addr.raw & 0xFFFFF000) | 0x800;
-	uint32 high = (addr.raw >> 32) & 0x0F;
-	msr_write(MSR_IA32_APIC_BASE, low, high);
+	msr_write(MSR_IA32_APIC_BASE, addr.raw);
 }
 
 uint32 apic_read_ioapic(apic_base_t addr, uint32 reg){

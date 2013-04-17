@@ -90,6 +90,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define APIC_CURR_COUNT		0x0390 // Current Count Register (for Timer) (Read Only)
 #define APIC_DIV_CONF		0x03E0 // Divide Configuration Register (for Timer) (Read/Write)
 
+//
+// APIC entry types from ACPI MADT table
+//
+
+#define APIC_TYPE_LAPIC			0 // Local APIC
+#define APIC_TYPE_IOAPIC		1 // IO APIC
+#define APIC_TYPE_ISO			2 // Interrupt Service Override
+#define APIC_TYPE_NMI			3 // Non-Maskable Interrupt Source
+#define APIC_TYPE_LAPIC_NMI		4 // Local APIC NMI
+#define APIC_TYPE_LAPIC_AO		5 // Local APIC Adress Override
+#define APIC_TYPE_IOSAPIC		6 // IO SAPIC
+#define APIC_TYPE_LSAPIC		7 // Local SAPIC
+#define APIC_TYPE_PIS			8 // Platform Interrupt Sources
+#define APIC_TYPE_Lx2APIC		9 // Local x2APIC
+#define APIC_TYPE_Lx2APIC_NMI	10 // Local x2APIC NMI
+
 /**
 * APIC base MSR structure
 */
@@ -98,7 +114,7 @@ typedef union {
 		uint64 reserved1	: 8; // Reserved
 		uint64 bsp			: 1; // Bootstrap processor
 		uint64 reserved2	: 2; // Reserved
-		uint64 global		: 1; // Global APIC enable/disable bit
+		uint64 enable		: 1; // Global APIC enable/disable bit
 		uint64 base_addr	: 24; // APIC base address (4 KByte aligned)
 		uint64 reserved		: 28; // Reserved
 	} s;

@@ -79,4 +79,9 @@ typedef long long		int64;
 #define va_end(v)		__builtin_va_end(v)
 #define va_arg(v, a)	__builtin_va_arg(v, a)
 
+typedef struct {
+	uint32 low;
+	uint32 high;
+} split_uint64_t;
+
 #endif /* __common_h */

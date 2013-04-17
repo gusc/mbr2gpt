@@ -73,7 +73,7 @@ void kmain(){
 		if (mem_map->entries[i].base + mem_map->entries[i].length > max_mem){
 			max_mem = mem_map->entries[i].base + mem_map->entries[i].length;
 		}
-		debug_print(DC_WDG, "%x - %x = %d", mem_map->entries[i].base, mem_map->entries[i].length, mem_map->entries[i].type);
+		debug_print(DC_WDG, "%x - %x = %d", mem_map->entries[i].base, mem_map->entries[i].base + mem_map->entries[i].length, mem_map->entries[i].type);
 	}
 	max_mem = max_mem / 1024 / 1024;
 	debug_print(DC_WB, "RAM: %d", max_mem);
