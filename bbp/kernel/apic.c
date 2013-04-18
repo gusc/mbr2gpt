@@ -37,51 +37,112 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "apic.h"
 #include "msr.h"
 #include "acpi.h"
+#include "paging.h"
 #if DEBUG == 1
 	#include "debug_print.h"
 #endif
 
-static void lapic_init(LocalAPIC_t *lapic){
-	if ((lapic->flags & 1) != 0){
-		apic_base_t apic = apic_get_base();
-		apic.s.enable = 1;
-		apic_set_base(apic);
-		apic = apic_get_base();
+static LocalAPIC_t *_lapic[256];
+static uint64 _lapic_count = 0;
+static uint64 _lapic_addr;
+
+static IOAPIC_t *_ioapic;
+
+static void lapic_init(){
+	apic_base_t apic = apic_get_base();
+	// Address is 4KB aligned
+	_lapic_addr = (apic.raw & PAGE_MASK);
 #if DEBUG == 1
-		debug_print(DC_WB, "%x", apic.raw);
+	debug_print(DC_WB, "Local APIC @%x", _lapic_addr);
+	if (apic.s.bsp){
+		debug_print(DC_WB, "Boot CPU");
+	}
 #endif
+	// Disable cache
+	pm_t pe = page_get_pml4_entry(_lapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml4_entry(_lapic_addr, pe);
+	pe = page_get_pml3_entry(_lapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml3_entry(_lapic_addr, pe);
+	pe = page_get_pml2_entry(_lapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml2_entry(_lapic_addr, pe);
+	pe = page_get_pml1_entry(_lapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml1_entry(_lapic_addr, pe);
+	
+	uint64 i;
+	if (apic.s.bsp){
+		for (i = 0; i < _lapic_count; i ++){
+#if DEBUG == 1
+		debug_print(DC_WBL, "CPU_ID:APIC_ID = %d:%d", _lapic[i]->processor_id, _lapic[i]->apic_id);
+#endif		
+			//TODO: signal other CPUs to start
+		}
 	}
 }
 
-static void ioapic_init(IOAPIC_t *ioapic){
+static void ioapic_init(){
+	// Address is 4KB aligned
+	uint64 ioapic_addr = (_ioapic->apic_addr & PAGE_MASK);
 #if DEBUG == 1
-	debug_print(DC_WB, "%x", ioapic->apic_addr);
+	debug_print(DC_WB, "IO APIC @%x", ioapic_addr);
 #endif
+	// Disable cache
+	pm_t pe = page_get_pml4_entry(ioapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml4_entry(ioapic_addr, pe);
+	pe = page_get_pml3_entry(ioapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml3_entry(ioapic_addr, pe);
+	pe = page_get_pml2_entry(ioapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml2_entry(ioapic_addr, pe);
+	pe = page_get_pml1_entry(ioapic_addr);
+	pe.s.cache_disable = 1;
+	page_set_pml1_entry(ioapic_addr, pe);
+
+	// TODO: setup IRQs
 }
 
 bool apic_init(){
 	char apic[4] = {'A', 'P', 'I', 'C'};
-	uint32 length;
+	uint64 length;
 	MADT_t *madt = (MADT_t *)acpi_table(apic);
 	APICHeader_t *ah;
 	if (madt != null){
+		// Gather Local and IO APIC(s)
 		length = (madt->h.length - sizeof(MADT_t) + 4);
 		ah = (APICHeader_t *)(&madt->ptr);
+		// Enumerate APICs
 		while (length > 0){
 #if DEBUG == 1
-			debug_print(DC_WGR, "APIC type: %d", ah->type);
+			//debug_print(DC_WGR, "APIC type: %d", ah->type);
 #endif
 			switch (ah->type){
 				case APIC_TYPE_LAPIC:
-					lapic_init((LocalAPIC_t *)ah);
+					// Test if it's enabled - if not - don't touch it
+					if ((((LocalAPIC_t *)ah)->flags & 1) != 0){
+						_lapic[_lapic_count] = (LocalAPIC_t *)ah;
+						_lapic_count ++;
+					}
 					break;
 				case APIC_TYPE_IOAPIC:
-					ioapic_init((IOAPIC_t *)ah);
+					_ioapic = (IOAPIC_t *)ah;
 					break;
 			}
 			length -= ah->length;
 			ah = (APICHeader_t *)(((uint64)ah) + ah->length);
 		}
+#if DEBUG == 1
+		debug_print(DC_WB, "CPU count:%d", _lapic_count);
+#endif
+
+		// Initialize Local APIC
+		lapic_init();
+		// Initialize IO APIC
+		ioapic_init();
 	}
 }
 
@@ -90,19 +151,26 @@ apic_base_t apic_get_base(){
 	msr_read(MSR_IA32_APIC_BASE, &addr.raw);
 	return addr;
 }
-
 void apic_set_base(apic_base_t addr){
 	msr_write(MSR_IA32_APIC_BASE, addr.raw);
 }
 
-uint32 apic_read_ioapic(apic_base_t addr, uint32 reg){
-	uint32 volatile *ioapic = (uint32 volatile *)(addr.raw);
+uint32 apic_read_reg(uint64 reg){
+	uint32 volatile *apic = (uint32 volatile *)(_lapic_addr + reg);
+	return *apic;
+}
+void apic_write_reg(uint64 reg, uint32 value){
+	uint32 volatile *apic = (uint32 volatile *)(_lapic_addr + reg);
+	(*apic) = value;
+}
+
+uint32 apic_read_ioapic(uint64 addr, uint32 reg){
+	uint32 volatile *ioapic = (uint32 volatile *)(addr);
 	ioapic[0] = (reg & 0xFFFF);
 	return ioapic[4];
 }
-
-void apic_write_ioapic(apic_base_t addr, uint32 reg, uint32 data){
-	uint32 volatile *ioapic = (uint32 volatile *)(addr.raw);
+void apic_write_ioapic(uint64 addr, uint32 reg, uint32 data){
+	uint32 volatile *ioapic = (uint32 volatile *)(addr);
 	ioapic[0] = (reg & 0xFFFF);
 	ioapic[4] = data;
 }

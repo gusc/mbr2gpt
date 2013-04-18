@@ -44,8 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Video screen size
 static uint64 _columns = 80;
 static uint64 _rows = 25;
-// Something I forgot
-static uint64 _row_offset = 0;
 // Global cursor
 static uint64 _x = 0;
 static uint64 _y = 0;
@@ -67,31 +65,20 @@ void debug_clear(uint8 color){
 
 void debug_scroll(){
 	char *vidmem = (char *)VIDEOMEM_LOC;
-	uint8 c;
-	uint8 r;
+	// Current index
 	uint16 i;
+	// Previous index
 	uint16 p;
 	// Scroll the screen
-	for (r = 1; r < _rows; r ++){
-		for (c = 0; c < _columns; c ++){
-			// Clear previous line
-			p = ((r - 1) * _columns * 2) + (c * 2);
-			vidmem[p] = ' ';
-			vidmem[p + 1] = _base_color;
-			// Copy current line
-			i = (r * _columns * 2) + (c * 2);
-			vidmem[p] = vidmem[i];
-			vidmem[p + 1] = vidmem[i + 1];
-		}
-	}
-	// Clear the last line
-	r = _rows - 1;
-	for (c = 0; c < _columns; c ++){
-		i = (r * _columns * 2) + (c * 2);
+	for (i = _columns * 2; i < _rows * _columns * 2; i += 2){
+		// Copy current line to previous line
+		p = i - (_columns * 2);
+		vidmem[p] = vidmem[i];
+		vidmem[p + 1] = vidmem[i + 1];
+		// Clear current line
 		vidmem[i] = ' ';
 		vidmem[i + 1] = _base_color;
 	}
-	_row_offset ++;
 }
 
 void debug_print_at(uint8 x, uint8 y, uint8 color, const char *format, ...){
@@ -119,7 +106,6 @@ static void __debug_print_f(uint8 x, uint8 y, uint8 color, const char *format, v
 	mem_fill((uint8 *)str, 2001, 0);
 	uint16 i;
 	// Keep everything in bounds
-	y = y - _row_offset;
 	if (__write_f(str, 2000, format, args)){
 		char *s = (char *)str;
 		while (*s != 0){

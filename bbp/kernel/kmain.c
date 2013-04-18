@@ -68,28 +68,21 @@ void kmain(){
 	e820map_t *mem_map = (e820map_t *)E820_LOC;
 	uint16 i;
 	uint64 max_mem = 0;
-	debug_print(DC_WB, "Memory map:");
+	//debug_print(DC_WB, "Memory map:");
 	for (i = 0; i < mem_map->size; i ++){
 		if (mem_map->entries[i].base + mem_map->entries[i].length > max_mem){
 			max_mem = mem_map->entries[i].base + mem_map->entries[i].length;
 		}
-		debug_print(DC_WDG, "%x - %x = %d", mem_map->entries[i].base, mem_map->entries[i].base + mem_map->entries[i].length, mem_map->entries[i].type);
+		//debug_print(DC_WDG, "%x - %x = %d", mem_map->entries[i].base, mem_map->entries[i].base + mem_map->entries[i].length, mem_map->entries[i].type);
 	}
 	max_mem = max_mem / 1024 / 1024;
-	debug_print(DC_WB, "RAM: %d", max_mem);
+	debug_print(DC_WB, "RAM: %dMB", max_mem);
 #endif
 	
 	// Initialize ACPI
 	if (acpi_init()){
-#if DEBUG == 1
-		// List available ACPI tables
-		//acpi_list();
-#endif
 		// Initialize APIC
 		apic_init();
-
-		// Initialize PCI
-		//pci_init();
 	}
 
 	// Test interrupt exceptions

@@ -136,19 +136,33 @@ apic_base_t apic_get_base();
 * @param addr - physical address of APIC memory maped registers
 */
 void apic_set_base(apic_base_t addr);
+
+/**
+* Read Local APIC register
+* @param reg - APIC register selector
+* @return data stored in register
+*/
+uint32 apic_read_reg(uint64 reg);
+/**
+* Write Local APIC register
+* @param reg - APIC register selector
+* @param data - data to be stored in register
+*/
+void apic_write_reg(uint64 reg, uint32 value);
+
 /**
 * Read IOAPIC value
 * @param addr - APIC base address
 * @param reg - IOAPIC register selector
 * @return data stored in register
 */
-uint32 apic_read_ioapic(apic_base_t addr, uint32 reg);
+uint32 apic_read_ioapic(uint64 addr, uint32 reg);
 /**
 * Write IOAPIC value
 * @param addr - APIC base address
 * @param reg - IOAPIC register selector
 * @param data - data to be stored in register
 */
-void apic_write_ioapic(apic_base_t addr, uint32 reg, uint32 data);
+void apic_write_ioapic(uint64 addr, uint32 reg, uint32 data);
 
 #endif /* __apic_h */

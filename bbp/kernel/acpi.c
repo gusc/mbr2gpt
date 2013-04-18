@@ -108,6 +108,10 @@ bool acpi_init(){
 			//if (ssdt != null){
 				// TODO: parse SSDT
 			//}
+
+#if DEBUG == 1
+			//acpi_list();
+#endif
 			return true;
 		}
 	}
