@@ -88,6 +88,7 @@ static void ioapic_init(){
 	uint64 ioapic_addr = (_ioapic->apic_addr & PAGE_MASK);
 #if DEBUG == 1
 	debug_print(DC_WB, "IO APIC @%x", ioapic_addr);
+	debug_print(DC_WB, "IOAPIC ID:%d", _ioapic->apic_id);
 #endif
 	// Disable cache
 	pm_t pe = page_get_pml4_entry(ioapic_addr);
