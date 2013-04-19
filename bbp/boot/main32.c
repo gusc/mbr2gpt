@@ -117,24 +117,24 @@ static void setup_pages(uint64 ammount){
 	uint64 dr;
 	uint64 ptr;
 	
-	// Single page holds 4KB of RAM
+	// Single page (PML1 entry) holds 4KB of RAM
 	uint64 page_count = ammount / 4096;
 	if (ammount % 4096 > 0){
 		page_count ++;
 	}
-	// Single table entry holds 2MB of RAM
+	// Single table (PML2 entry) holds 2MB of RAM
 	uint64 table_count = page_count / 512;
 	if (page_count % 512 > 0){
 		table_count ++;
 	}
-	// Single directory entry holds 1GB of RAM
-	uint64 dir_count = table_count / 512;
+	// Single directory (PML3 entry, directory table pointer) holds 1GB of RAM
+	uint64 directory_count = table_count / 512;
 	if (table_count % 512 > 0){
-		dir_count ++;
+		directory_count ++;
 	}
-	// Single cabinet entry holds 512GB of RAM
-	uint64 drawer_count = dir_count / 512;
-	if (dir_count % 512 > 0){
+	// Single drawer (PML4 entry) holds 512GB of RAM
+	uint64 drawer_count = directory_count / 512;
+	if (directory_count % 512 > 0){
 		drawer_count ++;
 	}
 	
@@ -150,12 +150,12 @@ static void setup_pages(uint64 ammount){
 	pml2 = (pm_t*)(((uint32)pml3) + (sizeof(pm_t) * 512 * (uint32)drawer_count));
 	// Located at PML2 + (8 * 512 * directory count)
 	// Holds 512 entries * table_count, each entry maps 4KB, table = 2MB
-	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * (uint32)dir_count));
+	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * (uint32)directory_count));
 	
 	// Clear memory region where the page tables will reside
 	mem_set(0, (uint8 *)pml4, sizeof(pm_t) * 512);
 	mem_set(0, (uint8 *)pml3, sizeof(pm_t) * 512 * drawer_count);
-	mem_set(0, (uint8 *)pml2, sizeof(pm_t) * 512 * dir_count);
+	mem_set(0, (uint8 *)pml2, sizeof(pm_t) * 512 * directory_count);
 	mem_set(0, (uint8 *)pml1, sizeof(pm_t) * 512 * table_count);
 
 	// Set up pages, tables, directories and drawers in the cabinet :)
@@ -176,7 +176,7 @@ static void setup_pages(uint64 ammount){
 		pml2[t].s.write_through = 1;
 		//pml2[t].s.cache_disable = 1;
 	}
-	for (d = 0; d < dir_count; d ++){
+	for (d = 0; d < directory_count; d ++){
 		ptr = (uint64)(((uint32)pml2) + (sizeof(pm_t) * 512 * d));
 		pml3[d].raw = ptr & PAGE_MASK;
 		pml3[d].s.present = 1;
@@ -185,13 +185,12 @@ static void setup_pages(uint64 ammount){
 		//pml3[d].s.cache_disable = 1;
 	}
 	for (dr = 0; dr < drawer_count; dr ++){
-		// Point first PML4 entry to PML3 table
 		ptr = (uint64)(((uint32)pml3) + (sizeof(pm_t) * 512 * dr));
 		pml4[dr].raw = ptr & PAGE_MASK;
 		pml4[dr].s.present = 1;
 		pml4[dr].s.writable = 1;
 		pml4[dr].s.write_through = 1;
-		//pml4[0].s.cache_disable = 1;
+		//pml4[dr].s.cache_disable = 1;
 	}
 
 	// Set PML4 pointer address

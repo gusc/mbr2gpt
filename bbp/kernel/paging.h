@@ -78,6 +78,13 @@ typedef union {
 uint64 page_normalize_vaddr(uint64 vaddr);
 
 /**
+* Map a page containing specified physical address
+* @param paddr - physical address to map
+* @return virtual address
+*/
+uint64 page_map(uint64 paddr);
+
+/**
 * Get index of PML4 table entry from virtual address
 * @param vaddr - virtual address
 * @return PML4 index

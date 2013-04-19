@@ -46,7 +46,8 @@ static LocalAPIC_t *_lapic[256];
 static uint64 _lapic_count = 0;
 static uint64 _lapic_addr;
 
-static IOAPIC_t *_ioapic;
+static IOAPIC_t *_ioapic[256];
+static uint64 _ioapic_count = 0;
 
 static void lapic_init(){
 	apic_base_t apic = apic_get_base();
@@ -58,7 +59,7 @@ static void lapic_init(){
 		debug_print(DC_WB, "Boot CPU");
 	}
 #endif
-	// Disable cache
+	// Map pages cache
 	pm_t pe = page_get_pml4_entry(_lapic_addr);
 	pe.s.cache_disable = 1;
 	page_set_pml4_entry(_lapic_addr, pe);
@@ -71,9 +72,18 @@ static void lapic_init(){
 	pe = page_get_pml1_entry(_lapic_addr);
 	pe.s.cache_disable = 1;
 	page_set_pml1_entry(_lapic_addr, pe);
-	
-	uint64 i;
+
+	// Initialize Local APIC
+	//uint32 val = apic_read_reg(APIC_LAPIC_VERSION);
+	//uint32 ver = val & 0xFF;
+	//uint32 lvt_count = (val >> 16) & 0xFF;
+#if DEBUG == 1
+	//debug_print(DC_WBL, "Version: %d, LVTs: %d", ver, lvt_count);
+#endif
+
+	// Initialize Other Local APICs if this is a bootstrap processor
 	if (apic.s.bsp){
+		uint64 i;
 		for (i = 0; i < _lapic_count; i ++){
 #if DEBUG == 1
 		debug_print(DC_WBL, "CPU_ID:APIC_ID = %d:%d", _lapic[i]->processor_id, _lapic[i]->apic_id);
@@ -85,38 +95,41 @@ static void lapic_init(){
 
 static void ioapic_init(){
 	// Address is 4KB aligned
-	uint64 ioapic_addr = (_ioapic->apic_addr & PAGE_MASK);
+	uint64 i;
+	for (i = 0; i < _ioapic_count; i ++){
+		uint64 ioapic_addr = (_ioapic[i]->apic_addr & PAGE_MASK);
 #if DEBUG == 1
-	debug_print(DC_WB, "IO APIC @%x", ioapic_addr);
-	debug_print(DC_WB, "IOAPIC ID:%d", _ioapic->apic_id);
+		debug_print(DC_WB, "IO APIC @%x", ioapic_addr);
+		debug_print(DC_WB, "IOAPIC ID:%d", _ioapic[i]->apic_id);
 #endif
-	// Disable cache
-	pm_t pe = page_get_pml4_entry(ioapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml4_entry(ioapic_addr, pe);
-	pe = page_get_pml3_entry(ioapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml3_entry(ioapic_addr, pe);
-	pe = page_get_pml2_entry(ioapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml2_entry(ioapic_addr, pe);
-	pe = page_get_pml1_entry(ioapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml1_entry(ioapic_addr, pe);
+		// Disable cache
+		pm_t pe = page_get_pml4_entry(ioapic_addr);
+		pe.s.cache_disable = 1;
+		page_set_pml4_entry(ioapic_addr, pe);
+		pe = page_get_pml3_entry(ioapic_addr);
+		pe.s.cache_disable = 1;
+		page_set_pml3_entry(ioapic_addr, pe);
+		pe = page_get_pml2_entry(ioapic_addr);
+		pe.s.cache_disable = 1;
+		page_set_pml2_entry(ioapic_addr, pe);
+		pe = page_get_pml1_entry(ioapic_addr);
+		pe.s.cache_disable = 1;
+		page_set_pml1_entry(ioapic_addr, pe);
 
-	// TODO: setup IRQs
+		// TODO: setup IRQs
+	}
 }
 
 bool apic_init(){
 	char apic[4] = {'A', 'P', 'I', 'C'};
-	uint64 length;
 	MADT_t *madt = (MADT_t *)acpi_table(apic);
-	APICHeader_t *ah;
 	if (madt != null){
 		// Gather Local and IO APIC(s)
-		length = (madt->h.length - sizeof(MADT_t) + 4);
-		ah = (APICHeader_t *)(&madt->ptr);
+		_lapic_addr = (uint64)madt->lapic_addr;
+		
 		// Enumerate APICs
+		uint64 length = (madt->h.length - sizeof(MADT_t) + 4);
+		APICHeader_t *ah = (APICHeader_t *)(&madt->ptr);
 		while (length > 0){
 #if DEBUG == 1
 			//debug_print(DC_WGR, "APIC type: %d", ah->type);
@@ -130,7 +143,8 @@ bool apic_init(){
 					}
 					break;
 				case APIC_TYPE_IOAPIC:
-					_ioapic = (IOAPIC_t *)ah;
+					_ioapic[_ioapic_count] = (IOAPIC_t *)ah;
+					_ioapic_count ++;
 					break;
 			}
 			length -= ah->length;
