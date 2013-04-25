@@ -47,64 +47,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * @see boot.asm
 */
 extern uint32 pml4_ptr32;
-/**
-* Page table structures
-*/
-pm_t *pml4; // a.k.a. PML4T (512GB per entry = 256TB total, this is a cabinet)
-pm_t *pml3; // a.k.a. PDPT (page directory pointer table, 1GB per entry, let's call this a drawer)
-pm_t *pml2; // a.k.a. PD (page directory, 2MB per entry)
-pm_t *pml1; // a.k.a. PT (page table, 4KB per entry)
 
 /**
-* Set value in memory
-* @param val - the value to set
+* Clear memory region
 * @param dest - destination address (pointer to destination buffer)
-* @param len - length to fill
+* @param len - length to clear
 */
-static void mem_set(uint8 val, uint8 *dest, uint16 len){
+static void mem_clear(uint8 *dest, uint32 len){
 	while(len--){
-		*dest++ = val;
+		*dest++ = 0;
 	}
-}
-/**
-* Filter out memory map of unusable regions
-* and sort them in ascending order
-*/
-static void sort_e820(e820map_t *mem_map){
-	uint16 i = 0;
-	// Do the bubble sort to make them in ascending order
-	e820entry_t e;
-	uint16 swapped  = 1;
-	uint16 count = mem_map->size;
-	while (count > 0 && swapped ){
-		i = 0;
-		swapped  = 0;
-		while (i < count - 1){
-			if (mem_map->entries[i].base > mem_map->entries[i + 1].base){
-				e = mem_map->entries[i];
-				mem_map->entries[i] = mem_map->entries[i + 1];
-				mem_map->entries[i + 1] = e;
-				swapped  = 1;
-			}
-			i ++;
-		}
-		count --;
-	}
-}
-/**
-* Get total available RAM
-* @param mem_map - memory map structure
-* @return total available memory in bytes
-*/
-static uint64 get_ram(e820map_t *mem_map){
-	uint16 i;
-	uint64 mem_size = 0;
-	for (i = 0; i < mem_map->size; i ++){
-		if (mem_map->entries[i].base + mem_map->entries[i].length > mem_size){
-			mem_size = mem_map->entries[i].base + mem_map->entries[i].length;
-		}
-	}
-	return mem_size;
 }
 /**
 * Setup PML4 pages to enter Long Mode
@@ -118,8 +70,8 @@ static void setup_pages(uint64 ammount){
 	uint64 ptr;
 	
 	// Single page (PML1 entry) holds 4KB of RAM
-	uint64 page_count = ammount / 4096;
-	if (ammount % 4096 > 0){
+	uint64 page_count = ammount / PAGE_SIZE;
+	if (ammount % PAGE_SIZE > 0){
 		page_count ++;
 	}
 	// Single table (PML2 entry) holds 2MB of RAM
@@ -138,29 +90,34 @@ static void setup_pages(uint64 ammount){
 		drawer_count ++;
 	}
 	
-	// Position the page structures in memory
-	// Always located at 0x00100000 (1MB mark)
+	// Position the page table structures in memory
+
+	// Located at 0x00100000 (1MB mark, see config.h)
+	// a.k.a. PML4T (512GB per entry = 256TB total, this is a page cabinet)
 	// Holds 512 entries, only 1st is active - enough to map 512GB
-	pml4 = (pm_t*)PT_LOC;
+	pm_t *pml4 = (pm_t*)PT_LOC; 
 	// Located at PML4 + (8 * 512)
+	// a.k.a. PDPT (page directory pointer table, 1GB per entry, let's call this a page drawer)
 	// Holds 512 entries, each entry maps up to 1GB, table = 512GB
-	pml3 = (pm_t*)(((uint32)pml4) + (sizeof(pm_t) * 512));
+	pm_t *pml3 = (pm_t*)(((uint32)pml4) + (sizeof(pm_t) * 512));
 	// Located at PML3 + (8 * 512 * drawer_count)
+	// a.k.a. PD (page directory, 2MB per entry)
 	// Holds 512 entries * directory_count, each entry maps up to 2MB, table = 1GB
-	pml2 = (pm_t*)(((uint32)pml3) + (sizeof(pm_t) * 512 * (uint32)drawer_count));
-	// Located at PML2 + (8 * 512 * directory count)
+	pm_t *pml2 = (pm_t*)(((uint32)pml3) + (sizeof(pm_t) * 512 * (uint32)drawer_count));
+	// Located at PML2 + (8 * 512 * directory_count)
+	// a.k.a. PT (page table, 4KB per entry)
 	// Holds 512 entries * table_count, each entry maps 4KB, table = 2MB
-	pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * (uint32)directory_count));
+	pm_t *pml1 = (pm_t*)(((uint32)pml2) + (sizeof(pm_t) * 512 * (uint32)directory_count));
 	
 	// Clear memory region where the page tables will reside
-	mem_set(0, (uint8 *)pml4, sizeof(pm_t) * 512);
-	mem_set(0, (uint8 *)pml3, sizeof(pm_t) * 512 * drawer_count);
-	mem_set(0, (uint8 *)pml2, sizeof(pm_t) * 512 * directory_count);
-	mem_set(0, (uint8 *)pml1, sizeof(pm_t) * 512 * table_count);
+	mem_clear((uint8 *)pml4, sizeof(pm_t) * 512);
+	mem_clear((uint8 *)pml3, sizeof(pm_t) * 512 * drawer_count);
+	mem_clear((uint8 *)pml2, sizeof(pm_t) * 512 * directory_count);
+	mem_clear((uint8 *)pml1, sizeof(pm_t) * 512 * table_count);
 
 	// Set up pages, tables, directories and drawers in the cabinet :)
 	for (p = 0; p < page_count; p ++){
-		ptr = (uint64)(p * 4096);
+		ptr = (uint64)(p * PAGE_SIZE);
 		pml1[p].raw = ptr & PAGE_MASK;
 		pml1[p].s.present = 1;
 		pml1[p].s.writable = 1;
@@ -201,12 +158,6 @@ static void setup_pages(uint64 ammount){
 * Initialize Protected Mode
 */
 void main32(){
-	// This is where main16.c loaded E820 memory map
-	e820map_t *mem_map = (e820map_t *)E820_LOC;
-	// Sort memory map
-	sort_e820(mem_map);
-	// Get total available ram
-	uint64 ram_total = get_ram(mem_map);
-	// Setup Page tables
-	setup_pages(ram_total);
+	// Page map some memory (identity map)
+	setup_pages(INIT_MEM);
 }

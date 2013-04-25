@@ -50,8 +50,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VIDEOMODE 1
 // Enable debug output
 #define DEBUG 1
-// Memory location where to store PMLx page tables
-#define PT_LOC 0x00100000
+// Initial memory size to map to enter Long Mode
+// we don't need more than this, but it should be more than 1MB
+// as the PMLx structures will be located at the 1MB mark
+#define INIT_MEM 0x200000 // 2MB
+// Default page size
+#define PAGE_SIZE 0x1000
 
 //
 // Hard-coded memory locations
@@ -59,6 +63,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // E820 memory map location
 #define E820_LOC 0x0800
+// Memory location where to store PMLx page tables
+#define PT_LOC 0x00100000
+
 #if VIDEOMODE == 1
 	// Teletype video memory location
 	// This can be used only in 32+ bit modes

@@ -58,17 +58,32 @@ typedef union {
 typedef union {
 	struct {
 		uint64 offset			: 12;	// Offset from the begining of page
-		uint64 page_idx			: 9;	// Page index (pml1)
-		uint64 table_idx		: 9;	// Table index (pml2)
-		uint64 directory_idx	: 9;	// Directory index (pml3)
-		uint64 pml4_idx			: 9;	// PML3 table index from PML4 table (pml4)
-		uint64 canonical		: 16;	// Should be FFF... if pml3_idx 9th bit is 1
+		uint64 page_idx			: 9;	// Page index (in pml1)
+		uint64 table_idx		: 9;	// Table index (in pml2)
+		uint64 directory_idx	: 9;	// Directory index (in pml3)
+		uint64 drawer_idx		: 9;	// Drawer index (in pml4)
+		uint64 canonical		: 16;	// Should be FFF... if drawer_idx 9th bit is 1 (see: canonical address)
 	} s;
 	uint64 raw;
 } vaddr_t;
 
 #define PAGE_MASK		0xFFFFFFFFFFFFF000
+#define PAGE_IMASK		0x0000000000000FFF // Inverse mask
 
+/**
+* Initialize paging
+*/
+void page_init();
+/**
+* Get total installed RAM
+* @return RAM size in bytes
+*/
+uint64 page_total_mem();
+/**
+* Get total available RAM
+* @return RAM size in bytes
+*/
+uint64 page_available_mem();
 /**
 * Normalize virtual address to canonical form
 * Usefull when converting from 32bit addresses to 64bit
@@ -76,87 +91,32 @@ typedef union {
 * @return normalized virtual address
 */
 uint64 page_normalize_vaddr(uint64 vaddr);
-
 /**
-* Map a page containing specified physical address
+* Identity map a physical address
 * @param paddr - physical address to map
 * @return virtual address
 */
 uint64 page_map(uint64 paddr);
+/**
+* Resolve physical address from virtual addres
+* @param vaddr - virtual address to resolve
+* @return physical address
+*/
+uint64 page_resolve(uint64 vaddr);
 
 /**
-* Get index of PML4 table entry from virtual address
+* Get the PMLx entry from virtual address
 * @param vaddr - virtual address
-* @return PML4 index
+* @param level - zero based level (0-3 for PML4 paging)
+* @return PMLx entry
 */
-uint64 page_get_pml4_idx(uint64 vaddr);
-/**
-* Get index of PML3 table entry from virtual address
-* @param vaddr - virtual address
-* @return PML3 index
-*/
-uint64 page_get_pml3_idx(uint64 vaddr);
-/**
-* Get index of PML2 table entry from virtual address
-* @param vaddr - virtual address
-* @return PML2 index
-*/
-uint64 page_get_pml2_idx(uint64 vaddr);
-/**
-* Get index of PML1 table entry from virtual address
-* @param vaddr - virtual address
-* @return PML1 index
-*/
-uint64 page_get_pml1_idx(uint64 vaddr);
-
-/**
-* Get the PML4 entry from virtual address
-* @param vaddr - virtual address
-* @return PML4 entry
-*/
-pm_t page_get_pml4_entry(uint64 vaddr);
-/**
-* Get the PML3 entry from virtual address
-* @param vaddr - virtual address
-* @return PML3 entry
-*/
-pm_t page_get_pml3_entry(uint64 vaddr);
-/**
-* Get the PML2 entry from virtual address
-* @param vaddr - virtual address
-* @return PML2 entry
-*/
-pm_t page_get_pml2_entry(uint64 vaddr);
-/**
-* Get the PML1 entry from virtual address
-* @param vaddr - virtual address
-* @return PML1 entry
-*/
-pm_t page_get_pml1_entry(uint64 vaddr);
-
+pm_t page_get_pml_entry(uint64 vaddr, uint8 level);
 /**
 * Set the PML4 entry for virtual address
 * @param vaddr - virtual address
+* @param level - zero based level (0-3 for PML4 paging)
 * @param pe - PML4 entry
 */
-void page_set_pml4_entry(uint64 vaddr, pm_t pe);
-/**
-* Set the PML3 entry for virtual address
-* @param vaddr - virtual address
-* @param pe - PML3 entry
-*/
-void page_set_pml3_entry(uint64 vaddr, pm_t pe);
-/**
-* Set the PML2 entry for virtual address
-* @param vaddr - virtual address
-* @param pe - PML2 entry
-*/
-void page_set_pml2_entry(uint64 vaddr, pm_t pe);
-/**
-* Set the PML1 entry for virtual address
-* @param vaddr - virtual address
-* @param pe - PML1 entry
-*/
-void page_set_pml1_entry(uint64 vaddr, pm_t pe);
+void page_set_pml_entry(uint64 vaddr, uint8 level, pm_t pe);
 
 #endif /* __paging_h */

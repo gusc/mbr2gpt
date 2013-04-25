@@ -59,31 +59,24 @@ static void lapic_init(){
 		debug_print(DC_WB, "Boot CPU");
 	}
 #endif
-	// Map pages cache
-	pm_t pe = page_get_pml4_entry(_lapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml4_entry(_lapic_addr, pe);
-	pe = page_get_pml3_entry(_lapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml3_entry(_lapic_addr, pe);
-	pe = page_get_pml2_entry(_lapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml2_entry(_lapic_addr, pe);
-	pe = page_get_pml1_entry(_lapic_addr);
-	pe.s.cache_disable = 1;
-	page_set_pml1_entry(_lapic_addr, pe);
+	// Map pages to Local APIC and disable cache
+	pm_t pe;
+	uint64 i;
+	page_map(_lapic_addr);
+	for (i = 0; i < 4; i ++){
+		pe = page_get_pml_entry(_lapic_addr, i);
+		pe.s.cache_disable = 1;
+		page_set_pml_entry(_lapic_addr, i, pe);
+	}
 
 	// Initialize Local APIC
-	//uint32 val = apic_read_reg(APIC_LAPIC_VERSION);
-	//uint32 ver = val & 0xFF;
-	//uint32 lvt_count = (val >> 16) & 0xFF;
+	uint32 val = apic_read_reg(APIC_LAPIC_VERSION);
 #if DEBUG == 1
-	//debug_print(DC_WBL, "Version: %d, LVTs: %d", ver, lvt_count);
+	debug_print(DC_WBL, "Version: %d", val);
 #endif
 
 	// Initialize Other Local APICs if this is a bootstrap processor
 	if (apic.s.bsp){
-		uint64 i;
 		for (i = 0; i < _lapic_count; i ++){
 #if DEBUG == 1
 		debug_print(DC_WBL, "CPU_ID:APIC_ID = %d:%d", _lapic[i]->processor_id, _lapic[i]->apic_id);
@@ -102,19 +95,15 @@ static void ioapic_init(){
 		debug_print(DC_WB, "IO APIC @%x", ioapic_addr);
 		debug_print(DC_WB, "IOAPIC ID:%d", _ioapic[i]->apic_id);
 #endif
-		// Disable cache
-		pm_t pe = page_get_pml4_entry(ioapic_addr);
-		pe.s.cache_disable = 1;
-		page_set_pml4_entry(ioapic_addr, pe);
-		pe = page_get_pml3_entry(ioapic_addr);
-		pe.s.cache_disable = 1;
-		page_set_pml3_entry(ioapic_addr, pe);
-		pe = page_get_pml2_entry(ioapic_addr);
-		pe.s.cache_disable = 1;
-		page_set_pml2_entry(ioapic_addr, pe);
-		pe = page_get_pml1_entry(ioapic_addr);
-		pe.s.cache_disable = 1;
-		page_set_pml1_entry(ioapic_addr, pe);
+		// Map pages to Local APIC and disable cache
+		pm_t pe;
+		uint64 l;
+		page_map(ioapic_addr);
+		for (l = 0; l < 4; l ++){
+			pe = page_get_pml_entry(ioapic_addr, i);
+			pe.s.cache_disable = 1;
+			page_set_pml_entry(ioapic_addr, i, pe);
+		}
 
 		// TODO: setup IRQs
 	}

@@ -36,14 +36,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../config.h"
 #include "acpi.h"
 #include "lib.h"
+#include "paging.h"
 #include "io.h"
 #if DEBUG == 1
 	#include "debug_print.h"
 #endif
-
-// Global cursor position
-uint16 sx = 0;
-uint16 sy = 0;
 
 RSDP_t *_rsdp = null;
 
@@ -60,7 +57,10 @@ static uint8 acpi_checksum(uint8 *block, uint64 len){
 	}
 	return (uint8)(sum);
 }
-
+/**
+* Find root system descriptor pointer (RSDP)
+* @retun true if found
+*/
 static bool acpi_find(){
 	const char sign[9] = "RSD PTR ";
 	if (_rsdp == null){
@@ -69,10 +69,14 @@ static bool acpi_find(){
 			if (mem_compare((uint8 *)_rsdp->signature, (uint8 *)sign, 8)){
 				if (_rsdp->revision == 0){
 					if (acpi_checksum((uint8 *)_rsdp, sizeof(uint8) * 20) == 0){ // Revision 1.0 checksum
+						// Map RSDT address
+						page_map((uint64)_rsdp->RSDT_address);
 						return true;
 					}
 				} else {
 					if (acpi_checksum((uint8 *)_rsdp, sizeof(RSDP_t)) == 0){ // Revision 2.0+ checksum
+						// Map XSDT address
+						page_map(_rsdp->XSDT_address);
 						return true;
 					}
 				}
@@ -83,9 +87,67 @@ static bool acpi_find(){
 	}
 	return false;
 }
+/**
+* Map pages to ACPI tables
+*/
+static void acpi_map(){
+	if (_rsdp != null){
+		SDTHeader_t *th;
+		uint64 i;
+		uint64 j;
+		uint64 count;
+		uint64 ptr;
+		if (_rsdp->revision == 0){
+			// ACPI version 1.0
+			RSDT_t *rsdt = (RSDT_t *)((uint64)_rsdp->RSDT_address);
+			// Get count of other table pointers
+			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint64)&rsdt->ptr;
+				// Move on to entry i (32bits = 4 bytes) in table pointer array
+				ptr += (i * 4);
+				// Map the page
+				page_map(ptr);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)((uint64)(*((uint32 *)ptr)));
+				// If the length is greater than a page, map additional pages 
+				if (th->length > PAGE_SIZE){
+					for (j = (ptr & PAGE_MASK) + PAGE_SIZE; j < ((ptr + th->length) & PAGE_MASK); j += PAGE_SIZE){
+						page_map(j);
+					}
+				}
+			}
+		} else {
+			// ACPI version 2.0+
+			XSDT_t *xsdt = (XSDT_t *)_rsdp->XSDT_address;
+			// Get count of other table pointers
+			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 8;
+			for (i = 0; i < count; i ++){
+				// Get an address of table pointer array
+				ptr = (uint64)&xsdt->ptr;
+				// Move on to entry i (64bits = 8 bytes) in table pointer array
+				ptr += (i * 8);
+				// Map the page
+				page_map(ptr);
+				// Get the pointer of table in table pointer array
+				th = (SDTHeader_t *)(*((uint64 *)ptr));
+				// If the length is greater than a page, map additional pages 
+				if (th->length > PAGE_SIZE){
+					for (j = (ptr & PAGE_MASK) + PAGE_SIZE; j < ((ptr + th->length) & PAGE_MASK); j += PAGE_SIZE){
+						page_map(j);
+					}
+				}
+			}
+		}
+	}
+}
 
 bool acpi_init(){
 	if (acpi_find()){
+		// Map pages to ACPI tables, so we don't get page faults
+		acpi_map();
+
 		char facp[4] = {'F', 'A', 'C', 'P'};
 		FADT_t *fadt = (FADT_t *)acpi_table(facp);
 		if (fadt != null){
@@ -127,10 +189,10 @@ SDTHeader_t *acpi_table(const char signature[4]){
 		SDTHeader_t *th;
 		uint32 i;
 		uint32 count;
+		uint64 ptr;
 		if (_rsdp->revision == 0){
 			// ACPI version 1.0
 			RSDT_t *rsdt = (RSDT_t *)((uint64)_rsdp->RSDT_address);
-			uint64 ptr;
 			// Get count of other table pointers
 			count = (rsdt->h.length - sizeof(SDTHeader_t)) / 4;
 			for (i = 0; i < count; i ++){
@@ -149,7 +211,6 @@ SDTHeader_t *acpi_table(const char signature[4]){
 		} else {
 			// ACPI version 2.0+
 			XSDT_t *xsdt = (XSDT_t *)_rsdp->XSDT_address;
-			uint64 ptr;
 			// Get count of other table pointers
 			count = (xsdt->h.length - sizeof(SDTHeader_t)) / 8;
 			for (i = 0; i < count; i ++){

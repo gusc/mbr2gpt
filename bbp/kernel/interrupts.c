@@ -37,10 +37,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "../config.h"
 #include "interrupts.h"
 #include "lib.h"
 #include "io.h"
-#include "../config.h"
+#include "paging.h"
 #if DEBUG == 1
 	#include "debug_print.h"
 #endif
@@ -178,12 +179,17 @@ void isr_handler(int_stack_t stack){
 			HANG();
 			break;
 		case 14: // Page fault			
+			asm volatile ("mov %%cr2, %0" : "=a"(cr2) :);			
+			// Map this page if it's not mapped yet, otherwise hang
+			if (!page_resolve(cr2)){
+				page_map(cr2);
+			} else {
 #if DEBUG == 1
-			asm volatile ("mov %%cr2, %0" : "=a"(cr2) :);
 			debug_print(DC_WRD, "Error: %x", stack.err_code);
 			debug_print(DC_WRD, "Addr: @%x", cr2);
 #endif
-			HANG();
+				HANG();
+			}
 			// Do something!
 			break;
 	}

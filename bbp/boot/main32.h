@@ -45,37 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common32.h"
 
 /**
-* Memory type codes for E820
-*/
-enum eMemType {
-	kMemOk = 1,			// Normal memory - usable
-	kMemReserved,		// Reserved memory - unusable
-	kMemACPIReclaim,	// ACPI reclaimable memory - might be usable after ACPI is taken care of
-	kMemACPI,			// ACPI NVS memory - unusable
-	kMemBad				// Bad memory - unsuable
-};
-/**
-* E820 memory map entry structure
-*/
-struct e820entry_struct {
-	uint16 entry_size;	// if 24, then it has attributes
-	uint64 base;
-	uint64 length;
-	uint32 type;
-	uint32 attributes;	// ACPI 3.0 only
-} __PACKED;
-typedef struct e820entry_struct e820entry_t;
-/**
-* E820 memory map structure
-*/
-struct e820map_struct {
-	uint16 size;
-	e820entry_t entries[];
-} __PACKED;
-typedef struct e820map_struct e820map_t;
-
-/**
-* 32-bit page table/directory/level3/level4 entry structure
+* 64-bit page table/directory/level3/level4 entry structure
 */
 
 typedef union {
