@@ -65,6 +65,16 @@ void debug_clear(uint8 color){
 
 void debug_scroll(){
 	char *vidmem = (char *)VIDEOMEM_LOC;
+	// Fast scroll
+	asm volatile ("rep\n\tmovsw" : : "c"((_rows - 1) * _columns), "S"(vidmem + _columns * 2), "D"(vidmem));
+	// Clear last line
+	uint16 i = (_rows - 1) * _columns * 2;
+	uint16 m = _rows * _columns * 2;
+	for (; i < m; i += 2){
+		vidmem[i] = ' ';
+		vidmem[i + 1] = _base_color;
+	}
+	/*
 	// Current index
 	uint16 i;
 	// Previous index
@@ -79,6 +89,7 @@ void debug_scroll(){
 		vidmem[i] = ' ';
 		vidmem[i + 1] = _base_color;
 	}
+	*/
 }
 
 void debug_print_at(uint8 x, uint8 y, uint8 color, const char *format, ...){

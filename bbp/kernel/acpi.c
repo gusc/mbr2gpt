@@ -172,7 +172,7 @@ bool acpi_init(){
 			//}
 
 #if DEBUG == 1
-			//acpi_list();
+			acpi_list();
 #endif
 			return true;
 		}
