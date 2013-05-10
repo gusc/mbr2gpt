@@ -73,7 +73,7 @@ typedef long long		int64;
 #define false 0
 #define bool uint64
 
-// Vardiac funciton arguments
+// Variadic funciton arguments
 #define va_list			__builtin_va_list
 #define va_start(v, f)	__builtin_va_start(v, f)
 #define va_end(v)		__builtin_va_end(v)

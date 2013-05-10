@@ -69,7 +69,7 @@ bool mem_compare(const uint8 *buff1, const uint8 *buff2, uint64 len){
 
 #define MAX_INT_STR 32
 
-uint32 str_copy(char *dest, uint64 len, const char *src){
+uint64 str_copy(char *dest, uint64 len, const char *src){
 	char *sp = (char *)src;
 	char *dp = (char *)dest;
 	uint64 s = 0;
@@ -153,7 +153,7 @@ int64 str_to_int(const char *str, int64 base){
 		negative = 1;
 	}
 	// Calculate integer value
-	while (*b >= 0x30 && *b <= 0x39){
+	while (*b >= 0x30 && *b <= 0x39){ // >= 0 && <= 9 (as in ascii 0, 1, ..., 9)
 		val *= 10; // multiply upwwards
 		val += (*b) - 0x30; // add current digit
 		b ++;

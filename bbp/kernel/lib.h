@@ -92,7 +92,7 @@ bool mem_compare(const uint8 *buff1, const uint8 *buff2, uint64 len);
 * @param [in] src - source buffer
 * @return number of characters copied
 */
-uint32 str_copy(char *dest, uint64 len, const char *src);
+uint64 str_copy(char *dest, uint64 len, const char *src);
 /**
 * Calculate the length of a string
 * @param [in] str - string
