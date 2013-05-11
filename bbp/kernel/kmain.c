@@ -70,7 +70,7 @@ void kmain(){
 	debug_print(DC_WB, "RAM Total: %dMB", page_total_mem() / 1024 / 1024);
 	debug_print(DC_WB, "RAM Avail: %dMB", page_available_mem() / 1024 / 1024);
 #endif
-	
+
 	// Initialize ACPI
 	if (acpi_init()){
 		// Initialize APIC
