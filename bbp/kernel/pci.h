@@ -60,10 +60,33 @@ typedef union {
 	uint32 raw;
 } pci_addr_t;
 
+typedef struct {
+	uint16 vendor_id;
+	uint16 device_id;
+	uint16 command;
+	uint16 status;
+	uint8 revision_id;
+	uint8 prog_if;
+	uint8 subclass_id;
+	uint8 class_id;
+	uint8 cache_line_size;
+	uint8 latency_timer;
+	uint8 header_type;
+	uint8 bist;
+} pci_header_t;
+
 /**
 * Enumerate PCI bus
 */
 void pci_init();
+/**
+* Read PCI device header
+* @param bus - bus number
+* @param device - device number
+* @param h [out] - pointer to header structure
+* @return true if device is found and false if not
+*/
+bool pci_get_header(uint16 bus, uint8 device, pci_header_t *h);
 /**
 * Read from PCI bus/device
 * @param addr [in] - PCI address (bus, device, function, register)

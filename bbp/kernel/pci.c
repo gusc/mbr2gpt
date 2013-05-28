@@ -34,8 +34,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "../config.h"
 #include "io.h"
 #include "pci.h"
+#if DEBUG == 1
+	#include "debug_print.h"
+#endif
 
 void pci_init(){
 	uint16 bus;
@@ -54,15 +58,38 @@ void pci_init(){
 			addr.s.device = device;
 			addr.s.reg = 0;
 			data = pci_read(&addr);
-			vendor_id = (uint16)(data >> 8);
+			vendor_id = (uint16)data;
 			if (vendor_id != 0xFFFF){
-				addr.s.reg = 0x8;
+				addr.s.reg = 8;
 				data = pci_read(&addr);
-				class_id = (uint8)data;
-				subclass_id = (uint8)(data >> 8);
+				class_id = (uint8)(data >> 24);
+				subclass_id = (uint8)(data >> 16);
+#if DEBUG == 1
+				debug_print(DC_BW, "Bus: %x, Dev: %x, Class: %x, Sub: %x", bus, device, class_id, subclass_id);
+#endif
 			}
 		}
 	}
+}
+
+bool pci_get_header(uint16 bus, uint8 device, pci_header_t *h){
+	uint32 data;
+	pci_addr_t addr;
+	if (bus < 256 && device <= 32){
+		addr.raw = 0;
+		addr.s.enabled = 1;
+		addr.s.bus = bus;
+		addr.s.device = device;
+		addr.s.reg = 0;
+		data = pci_read(&addr);
+		h->vendor_id = (uint16)data;
+		h->device_id = (uint16)(data >> 16);
+		if (h->vendor_id != 0xFFFF){
+
+			return true;
+		}
+	}
+	return false;
 }
 
 uint32 pci_read(pci_addr_t *addr){

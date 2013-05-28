@@ -76,7 +76,7 @@ void kmain(){
 		// Initialize APIC
 		apic_init();
 		// Initialize PCI
-		//pci_init();
+		pci_init();
 	}
 
 	// Test interrupt exceptions
