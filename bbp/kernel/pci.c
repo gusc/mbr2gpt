@@ -53,6 +53,11 @@ static uint32 pci_get_addr(uint16 bus, uint8 device, uint8 function, uint8 reg){
 }
 */
 
+
+
+static pci_dev_t _cache[256];
+static uint8 _cache_len = 0;
+
 /**
 * Get secondary bus number from PCI-to-PCI bridge
 */
@@ -76,8 +81,6 @@ void pci_init(){
 	pci_header_t header;
 	uint16 bus = 0;
 
-	debug_print(DC_WB, "%d", sizeof(pci_addr_t));
-
 	// Recursive scan - thanks OSDev Wiki
 	if (pci_get_header(0, 0, 0, &header)){
 		if ((header.type & 0x80) != 0){
@@ -95,11 +98,17 @@ void pci_init(){
 			pci_enum_bus(0);
 		}
 	}
+}
 
-	// Bruteforce scan
-	/*for (; bus < 256; bus ++){
-		pci_enum_bus(bus);
-	}*/
+bool pci_find_device(pci_dev_t *dev, uint8 class_id, uint8 subclass_id){
+	uint16 i = 0;
+	for (i = 0; i < _cache_len; i ++){
+		if (_cache[i].class_id == class_id && _cache[i].subclass_id == subclass_id){
+			mem_copy((uint8 *)dev, sizeof(pci_dev_t), (uint8 *)&_cache[i]);
+			return true;
+		}
+	}
+	return false;
 }
 
 bool pci_get_header(uint16 bus, uint8 device, uint8 function, pci_header_t *h){
@@ -134,9 +143,6 @@ void pci_enum_device(uint16 bus, uint8 device){
 	uint8 function = 0;
 	if (pci_get_header(bus, device, 0, &header)){
 		if (header.vendor_id != 0xFFFF){
-#if DEBUG == 1
-				debug_print(DC_BW, "pci%u:%u, class:%x:%x:%x, vendor:%x:%x", (uint64)bus, (uint64)device, (uint64)header.class_id, (uint64)header.subclass_id, (uint64)header.prog_if, (uint64)header.vendor_id, (uint64)header.device_id);
-#endif
 			if ((header.type & 0x80) != 0){ 
 				// Multifunctional device
 				for (function = 1; function < 8; function ++){
@@ -155,8 +161,17 @@ void pci_enum_function(uint16 bus, uint8 device, uint8 function){
 	uint16 secondary_bus = 0;
 	if (pci_get_header(bus, device, function, &header)){
 		if (header.vendor_id != 0xFFFF){
+			_cache[_cache_len].address.raw = 0;
+			_cache[_cache_len].address.s.bus = bus;
+			_cache[_cache_len].address.s.device = device;
+			_cache[_cache_len].address.s.function = function;
+			_cache[_cache_len].class_id = header.class_id;
+			_cache[_cache_len].subclass_id = header.subclass_id;
+			_cache[_cache_len].vendor_id = header.vendor_id;
+			_cache[_cache_len].device_id = header.device_id;
+			_cache_len ++;
 #if DEBUG == 1
-			debug_print(DC_BW, "  fn:%u, class:%x:%x:%x, vendor:%x:%x", (uint64)function, (uint64)header.class_id, (uint64)header.subclass_id, (uint64)header.prog_if, (uint64)header.vendor_id, (uint64)header.device_id);
+			debug_print(DC_BW, "pci%u:%u:%u, class:%x:%x:%x, vendor:%x:%x", (uint64)bus, (uint64)device, (uint64)function, (uint64)header.class_id, (uint64)header.subclass_id, (uint64)header.prog_if, (uint64)header.vendor_id, (uint64)header.device_id);
 #endif
 			if (header.class_id == 0x06 && header.subclass_id == 0x04){
 				secondary_bus = pci_get_secondary_bus(bus, device, function);

@@ -6,7 +6,7 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.innotek.de/VirtualBox-settings" version="1.12-windows">
-  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Ubuntu_64" snapshotFolder="Snapshots" lastStateChange="2013-05-29T17:03:03Z">
+  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Ubuntu_64" snapshotFolder="Snapshots" lastStateChange="2013-05-29T17:53:36Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa}" location="Disk.vmdk" format="VMDK" type="Normal"/>

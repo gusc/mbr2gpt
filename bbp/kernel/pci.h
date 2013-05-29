@@ -75,10 +75,27 @@ typedef struct {
 	uint8 bist;
 } pci_header_t;
 
+typedef struct {
+	pci_addr_t address;
+	uint16 vendor_id;
+	uint16 device_id;
+	uint8 class_id;
+	uint8 subclass_id;
+} pci_dev_t;
+
 /**
 * Enumerate PCI bus
 */
 void pci_init();
+
+/**
+* Locate PCI device by class and subclass
+* @param dev [out] - PCI device data structure
+* @param class_id - class code
+* @param subclass_id - sub-class
+* @return true if device is found
+*/
+bool pci_find_device(pci_dev_t *dev, uint8 class_id, uint8 subclass_id);
 /**
 * Read PCI device header
 * @param bus - bus number
