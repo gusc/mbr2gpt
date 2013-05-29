@@ -51,7 +51,7 @@ typedef union {
 	struct {
 		uint32 empty	: 2; // Always 0
 		uint32 reg		: 6; // Register number
-		uint32 fn		: 3; // Function number
+		uint32 function	: 3; // Function number
 		uint32 device	: 5; // Device number
 		uint32 bus		: 8; // Bus number
 		uint32 reserved	: 7; // Reserved
@@ -71,7 +71,7 @@ typedef struct {
 	uint8 class_id;
 	uint8 cache_line_size;
 	uint8 latency_timer;
-	uint8 header_type;
+	uint8 type;
 	uint8 bist;
 } pci_header_t;
 
@@ -83,22 +83,40 @@ void pci_init();
 * Read PCI device header
 * @param bus - bus number
 * @param device - device number
+* @param function - function number
 * @param h [out] - pointer to header structure
 * @return true if device is found and false if not
 */
-bool pci_get_header(uint16 bus, uint8 device, pci_header_t *h);
+bool pci_get_header(uint16 bus, uint8 device, uint8 function, pci_header_t *h);
+/**
+* Enumerate a single PCI bus
+* @param bus - bus number
+*/
+void pci_enum_bus(uint16 bus);
+/**
+* Enumerate a single PCI device on a bus
+* @param bus - bus number
+* @param device - device number
+*/
+void pci_enum_device(uint16 bus, uint8 device);
+/**
+* Enumeration PCI device functions
+* @param bus - bus number
+* @param device - device number
+*/
+void pci_enum_function(uint16 bus, uint8 device, uint8 function);
 /**
 * Read from PCI bus/device
-* @param addr [in] - PCI address (bus, device, function, register)
+* @param addr - PCI address
 * @return register value
 */
-uint32 pci_read(pci_addr_t *addr);
+uint32 pci_read(uint32 addr);
 /**
 * Write to PCI bus/device
-* @param addr [in] - PCI address (bus, device, function, register)
+* @param addr - PCI address
 * @param data - data to write
 */
-void pci_write(pci_addr_t *addr, uint32 data);
+void pci_write(uint32 addr, uint32 data);
 
 
 #endif /* __pci_h */

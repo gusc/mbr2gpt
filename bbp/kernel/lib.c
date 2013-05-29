@@ -135,7 +135,10 @@ uint64 int_to_str(char *dest, uint64 len, int64 val, int64 base){
 			}
 			val /= base;
 		} while (val != 0);
-		*--b = '-';
+		// Add minus sign only for decimals
+		if (base == 10){
+			*--b = '-';
+		}
 	}
 	// Copy the result and return number of digits processed
 	return str_copy(dest, len, b);

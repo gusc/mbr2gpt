@@ -35,71 +35,159 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "../config.h"
+#include "lib.h"
 #include "io.h"
 #include "pci.h"
 #if DEBUG == 1
 	#include "debug_print.h"
 #endif
 
-void pci_init(){
-	uint16 bus;
-	uint8 device;
-	uint32 data;
-	uint16 vendor_id;
-	uint8 class_id;
-	uint8 subclass_id;
+/*
+static uint32 pci_get_addr(uint16 bus, uint8 device, uint8 function, uint8 reg){
+	uint32 addr = 0x80000000;
+	addr |= ((uint32)bus) << 16;
+	addr |= (((uint32)device) & 0x1F) << 11;
+	addr |= (((uint32)function) & 0x7) << 8;
+	addr |= (uint32)(reg & 0xfc);
+	return addr;
+}
+*/
+
+/**
+* Get secondary bus number from PCI-to-PCI bridge
+*/
+static uint16 pci_get_secondary_bus(uint16 bus, uint8 device, uint8 function){
 	pci_addr_t addr;
-	addr.raw = 0;
-	addr.s.enabled = 1;
-	// Bruteforce for now
-	for (bus = 0; bus < 256; bus ++){
-		for (device = 0; device < 32; device ++){
-			addr.s.bus = bus;
-			addr.s.device = device;
-			addr.s.reg = 0;
-			data = pci_read(&addr);
-			vendor_id = (uint16)data;
-			if (vendor_id != 0xFFFF){
-				addr.s.reg = 8;
-				data = pci_read(&addr);
-				class_id = (uint8)(data >> 24);
-				subclass_id = (uint8)(data >> 16);
+	uint32 secondary_bus = 0;
+	if (bus < 256 && device < 32 && function < 8){
+		addr.raw = 0;
+		addr.s.enabled = 1;
+		addr.s.bus = bus;
+		addr.s.device = device;
+		addr.s.function = function;
+		addr.s.reg = 6;
+		secondary_bus = pci_read(addr.raw);
+		return (uint16)((secondary_bus >> 8) & 0xFF);
+	}
+	return bus;
+}
+
+void pci_init(){
+	pci_header_t header;
+	uint16 bus = 0;
+
+	debug_print(DC_WB, "%d", sizeof(pci_addr_t));
+
+	// Recursive scan - thanks OSDev Wiki
+	if (pci_get_header(0, 0, 0, &header)){
+		if ((header.type & 0x80) != 0){
+			// Multiple PCI host controllers
+			for (bus = 0; bus < 8; bus ++){
+				if (pci_get_header(0, 0, bus, &header)){
+					if (header.vendor_id != 0xFFFF){
+						// Valid PCI host controller
+						pci_enum_bus(bus);
+					}
+				}
+			}
+		} else {
+			// Single PCI host controller
+			pci_enum_bus(0);
+		}
+	}
+
+	// Bruteforce scan
+	/*for (; bus < 256; bus ++){
+		pci_enum_bus(bus);
+	}*/
+}
+
+bool pci_get_header(uint16 bus, uint8 device, uint8 function, pci_header_t *h){
+	pci_addr_t addr;
+	uint32 rows[4] = {0, 0, 0, 0};
+	uint8 row;
+	if (bus < 256 && device < 32 && function < 8){
+		addr.raw = 0;
+		addr.s.enabled = 1;
+		addr.s.bus = bus;
+		addr.s.device = device;
+		addr.s.function = function;
+		for (row = 0; row < 4; row ++){
+			addr.s.reg = row;
+			rows[row] = pci_read(addr.raw);
+		}
+		mem_copy((uint8 *)h, 16, (uint8 *)rows);
+		return true;
+	}
+	return false;
+}
+
+void pci_enum_bus(uint16 bus){
+	uint8 device = 0;
+	for (; device < 32; device ++){
+		pci_enum_device(bus, device);
+	}
+}
+
+void pci_enum_device(uint16 bus, uint8 device){
+	pci_header_t header;
+	uint8 function = 0;
+	if (pci_get_header(bus, device, 0, &header)){
+		if (header.vendor_id != 0xFFFF){
 #if DEBUG == 1
-				debug_print(DC_BW, "Bus: %x, Dev: %x, Class: %x, Sub: %x", bus, device, class_id, subclass_id);
+				debug_print(DC_BW, "pci%u:%u, class:%x:%x:%x, vendor:%x:%x", (uint64)bus, (uint64)device, (uint64)header.class_id, (uint64)header.subclass_id, (uint64)header.prog_if, (uint64)header.vendor_id, (uint64)header.device_id);
 #endif
+			if ((header.type & 0x80) != 0){ 
+				// Multifunctional device
+				for (function = 1; function < 8; function ++){
+					pci_enum_function(bus, device, function);
+				}
+			} else {
+				// Single function device
+				pci_enum_function(bus, device, 0);
 			}
 		}
 	}
 }
 
-bool pci_get_header(uint16 bus, uint8 device, pci_header_t *h){
-	uint32 data;
-	pci_addr_t addr;
-	if (bus < 256 && device <= 32){
-		addr.raw = 0;
-		addr.s.enabled = 1;
-		addr.s.bus = bus;
-		addr.s.device = device;
-		addr.s.reg = 0;
-		data = pci_read(&addr);
-		h->vendor_id = (uint16)data;
-		h->device_id = (uint16)(data >> 16);
-		if (h->vendor_id != 0xFFFF){
-
-			return true;
+void pci_enum_function(uint16 bus, uint8 device, uint8 function){
+	pci_header_t header;
+	uint16 secondary_bus = 0;
+	if (pci_get_header(bus, device, function, &header)){
+		if (header.vendor_id != 0xFFFF){
+#if DEBUG == 1
+			debug_print(DC_BW, "  fn:%u, class:%x:%x:%x, vendor:%x:%x", (uint64)function, (uint64)header.class_id, (uint64)header.subclass_id, (uint64)header.prog_if, (uint64)header.vendor_id, (uint64)header.device_id);
+#endif
+			if (header.class_id == 0x06 && header.subclass_id == 0x04){
+				secondary_bus = pci_get_secondary_bus(bus, device, function);
+				if (secondary_bus != bus){
+					pci_enum_bus(secondary_bus);
+				}
+			}
 		}
 	}
-	return false;
 }
 
-uint32 pci_read(pci_addr_t *addr){
+uint32 pci_read(uint32 addr){
 	uint32 data;
-	outd(PCI_CONFIG_ADDRESS, addr->raw);
+	outd(PCI_CONFIG_ADDRESS, addr);
 	data = ind(PCI_CONFIG_DATA);
 	return data;
 }
 
-void pci_write(pci_addr_t *addr, uint32 data){
-	outd(PCI_CONFIG_ADDRESS, addr->raw);
+void pci_write(uint32 addr, uint32 data){
+	outd(PCI_CONFIG_ADDRESS, addr);
 	outd(PCI_CONFIG_DATA, data);
 }
+
+/*uint32 pci_read(uint32 addr){
+	uint32 data;
+	asm volatile ("outl %%eax, %%dx" : : "d"(PCI_CONFIG_ADDRESS), "a"(addr));
+	asm volatile("inl %%dx, %%eax" : "=a"(data) : "d"(PCI_CONFIG_DATA));
+	return data;
+}
+
+void pci_write(uint32 addr, uint32 data){
+	asm volatile ("outl %%eax, %%dx" : : "d"(PCI_CONFIG_ADDRESS), "a"(addr));
+	asm volatile ("outl %%eax, %%dx" : : "d"(PCI_CONFIG_DATA), "a"(data));
+}*/

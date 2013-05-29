@@ -6,7 +6,7 @@
 ** Use VBoxManage or the VirtualBox Manager GUI to make changes.
 -->
 <VirtualBox xmlns="http://www.innotek.de/VirtualBox-settings" version="1.12-windows">
-  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Ubuntu_64" snapshotFolder="Snapshots" lastStateChange="2013-05-28T17:28:41Z">
+  <Machine uuid="{6d0f0966-66d6-4ee3-8740-df48157fae38}" name="MBR2GPT" OSType="Ubuntu_64" snapshotFolder="Snapshots" lastStateChange="2013-05-29T17:03:03Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{6530d803-6ee0-4ecd-a3fb-c218a8f6e4aa}" location="Disk.vmdk" format="VMDK" type="Normal"/>
@@ -20,7 +20,7 @@
       <ExtraDataItem name="GUI/InfoDlgState" value="400,450,normal"/>
       <ExtraDataItem name="GUI/LastCloseAction" value="powerOff"/>
       <ExtraDataItem name="GUI/LastGuestSizeHint" value="720,400"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="620,511,720,439"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="172,443,720,439"/>
       <ExtraDataItem name="GUI/MiniToolBarAlignment" value="bottom"/>
       <ExtraDataItem name="GUI/SaveMountedAtRuntime" value="yes"/>
       <ExtraDataItem name="GUI/ShowMiniToolBar" value="yes"/>
@@ -152,7 +152,7 @@
       </EmulatedUSB>
       <Guest memoryBalloonSize="0"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1369762076484375000" flags=""/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1369844032375000001" flags=""/>
       </GuestProperties>
     </Hardware>
     <StorageControllers>
