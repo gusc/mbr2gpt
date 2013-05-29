@@ -15,3 +15,5 @@
 /*.vmsd
 /*.nvram
 /vmware*
+
+/bbp/kernel/acpica
