@@ -281,10 +281,10 @@ RSDP_t *acpi_rsdp();
 SDTHeader_t *acpi_table(const char signature[4]);
 
 #if DEBUG == 1
-	/**
-	* List available ACPI tables on screen
-	*/
-	void acpi_list();
+/**
+* List available ACPI tables on screen
+*/
+void acpi_list();
 #endif
 
 #endif

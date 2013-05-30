@@ -44,6 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "acpi.h"
 #include "apic.h"
 #include "pci.h"
+#include "ahci.h"
 #if DEBUG == 1
 	#include "debug_print.h"
 #endif
@@ -73,10 +74,20 @@ void kmain(){
 
 	// Initialize ACPI
 	if (acpi_init()){
+#if DEBUG == 1
+		//acpi_list();
+#endif
 		// Initialize APIC
 		apic_init();
 		// Initialize PCI
 		pci_init();
+#if DEBUG == 1
+		//pci_list();
+#endif
+		// Initialize AHCI
+		if (ahci_init()){
+
+		}
 	}
 
 	// Test interrupt exceptions

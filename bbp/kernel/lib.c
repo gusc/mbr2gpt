@@ -223,6 +223,13 @@ uint64 __write_f(char *dest, uint64 len, const char *format, va_list args){
 					ret += val_len;
 					f ++;
 					break;
+				case 'b': // unsigned integer in binary
+					val_uint64 = va_arg(args, uint64);
+					val_len = int_to_str(d, MAX_INT_STR, val_uint64, 2); 
+					d += val_len;
+					ret += val_len;
+					f ++;
+					break;
 				case 'c': // char
 					val_char = (char)va_arg(args, int64); // chars are promoted to int in va_list
 					*(d++) = val_char;

@@ -171,9 +171,6 @@ bool acpi_init(){
 				// TODO: parse SSDT
 			//}
 
-#if DEBUG == 1
-			acpi_list();
-#endif
 			return true;
 		}
 	}

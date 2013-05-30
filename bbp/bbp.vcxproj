@@ -25,6 +25,7 @@
     <ClCompile Include="boot\main16.c" />
     <ClCompile Include="boot\main32.c" />
     <ClCompile Include="kernel\acpi.c" />
+    <ClCompile Include="kernel\ahci.c" />
     <ClCompile Include="kernel\apic.c" />
     <ClCompile Include="kernel\debug_print.c" />
     <ClCompile Include="kernel\interrupts.c" />
@@ -56,6 +57,7 @@
     <ClInclude Include="boot\main32.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="kernel\acpi.h" />
+    <ClInclude Include="kernel\ahci.h" />
     <ClInclude Include="kernel\apic.h" />
     <ClInclude Include="kernel\common.h" />
     <ClInclude Include="kernel\cpuid.h" />

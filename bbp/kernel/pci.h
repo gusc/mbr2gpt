@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __pci_h
 
 #include "common.h"
+#include "../config.h"
 
 #define PCI_CONFIG_ADDRESS	0x0CF8
 #define PCI_CONFIG_DATA		0x0CFC
@@ -47,6 +48,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PCI_REG_CLS_PRG_REV	0x8
 #define PCI_REG_BIST_TYPE	0xC
 
+/**
+* PCI address structure
+*/
 typedef union {
 	struct {
 		uint32 empty	: 2; // Always 0
@@ -59,7 +63,9 @@ typedef union {
 	} s;
 	uint32 raw;
 } pci_addr_t;
-
+/**
+* PCI configuration space header structure
+*/
 typedef struct {
 	uint16 vendor_id;
 	uint16 device_id;
@@ -74,66 +80,67 @@ typedef struct {
 	uint8 type;
 	uint8 bist;
 } pci_header_t;
-
+/**
+* Standard PCI device configuration space structure
+*/
 typedef struct {
-	pci_addr_t address;
-	uint16 vendor_id;
-	uint16 device_id;
-	uint8 class_id;
-	uint8 subclass_id;
-} pci_dev_t;
+	pci_header_t header;
+	uint32 bar[6];
+	uint32 cis_ptr;
+	uint16 sub_vendor_id;
+	uint16 subsystem_id;
+	uint32 exp_rom;
+	uint8 compat;
+	uint8 reserved[7];
+	uint8 int_line;
+	uint8 int_pin;
+	uint8 min_grant;
+	uint8 max_latency;
+} pci_device_t;
 
 /**
 * Enumerate PCI bus
 */
 void pci_init();
-
 /**
 * Locate PCI device by class and subclass
-* @param dev [out] - PCI device data structure
 * @param class_id - class code
 * @param subclass_id - sub-class
-* @return true if device is found
+* @return PCI address (check if it's not 0!)
 */
-bool pci_find_device(pci_dev_t *dev, uint8 class_id, uint8 subclass_id);
+pci_addr_t pci_find_device(uint8 class_id, uint8 subclass_id);
 /**
 * Read PCI device header
-* @param bus - bus number
-* @param device - device number
-* @param function - function number
-* @param h [out] - pointer to header structure
-* @return true if device is found and false if not
+* @param addr - PCI address
+* @return a pointer to header structure
 */
-bool pci_get_header(uint16 bus, uint8 device, uint8 function, pci_header_t *h);
+pci_header_t *pci_get_header(pci_addr_t addr);
 /**
-* Enumerate a single PCI bus
-* @param bus - bus number
+* Read PCI device configuration structure
+* @param addr - PCI address
+* @return a pointer to configuration structure
 */
-void pci_enum_bus(uint16 bus);
-/**
-* Enumerate a single PCI device on a bus
-* @param bus - bus number
-* @param device - device number
-*/
-void pci_enum_device(uint16 bus, uint8 device);
-/**
-* Enumeration PCI device functions
-* @param bus - bus number
-* @param device - device number
-*/
-void pci_enum_function(uint16 bus, uint8 device, uint8 function);
+pci_device_t *pci_get_config(pci_addr_t addr);
 /**
 * Read from PCI bus/device
 * @param addr - PCI address
 * @return register value
 */
-uint32 pci_read(uint32 addr);
+uint32 pci_read(pci_addr_t addr);
 /**
 * Write to PCI bus/device
 * @param addr - PCI address
 * @param data - data to write
 */
-void pci_write(uint32 addr, uint32 data);
+void pci_write(pci_addr_t addr, uint32 data);
+
+
+#if DEBUG == 1
+/**
+* List available PCI devices on screen
+*/
+void pci_list();
+#endif
 
 
 #endif /* __pci_h */
