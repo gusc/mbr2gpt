@@ -70,13 +70,13 @@ static bool acpi_find(){
 				if (_rsdp->revision == 0){
 					if (acpi_checksum((uint8 *)_rsdp, sizeof(uint8) * 20) == 0){ // Revision 1.0 checksum
 						// Map RSDT address
-						page_map((uint64)_rsdp->RSDT_address);
+						page_map_mmio((uint64)_rsdp->RSDT_address);
 						return true;
 					}
 				} else {
 					if (acpi_checksum((uint8 *)_rsdp, sizeof(RSDP_t)) == 0){ // Revision 2.0+ checksum
 						// Map XSDT address
-						page_map(_rsdp->XSDT_address);
+						page_map_mmio(_rsdp->XSDT_address);
 						return true;
 					}
 				}
@@ -108,13 +108,13 @@ static void acpi_map(){
 				// Move on to entry i (32bits = 4 bytes) in table pointer array
 				ptr += (i * 4);
 				// Map the page
-				page_map(ptr);
+				page_map_mmio(ptr);
 				// Get the pointer of table in table pointer array
 				th = (SDTHeader_t *)((uint64)(*((uint32 *)ptr)));
 				// If the length is greater than a page, map additional pages 
 				if (th->length > PAGE_SIZE){
 					for (j = (ptr & PAGE_MASK) + PAGE_SIZE; j < ((ptr + th->length) & PAGE_MASK); j += PAGE_SIZE){
-						page_map(j);
+						page_map_mmio(j);
 					}
 				}
 			}
@@ -129,13 +129,13 @@ static void acpi_map(){
 				// Move on to entry i (64bits = 8 bytes) in table pointer array
 				ptr += (i * 8);
 				// Map the page
-				page_map(ptr);
+				page_map_mmio(ptr);
 				// Get the pointer of table in table pointer array
 				th = (SDTHeader_t *)(*((uint64 *)ptr));
 				// If the length is greater than a page, map additional pages 
 				if (th->length > PAGE_SIZE){
 					for (j = (ptr & PAGE_MASK) + PAGE_SIZE; j < ((ptr + th->length) & PAGE_MASK); j += PAGE_SIZE){
-						page_map(j);
+						page_map_mmio(j);
 					}
 				}
 			}

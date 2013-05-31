@@ -11,6 +11,7 @@ Main entry files:
 
 Helper files:
 * acpi.* - ACPI table lokup implementation
+* ahci.* - AHCI driver
 * apic.* - APIC/xAPIC/x2APIC initialization
 * common.h - data type definitions
 * cpuid.h - inline assembly definition for CPUID instruction

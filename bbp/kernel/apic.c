@@ -62,7 +62,7 @@ static void lapic_init(){
 	// Map pages to Local APIC and disable cache
 	pm_t pe;
 	uint64 i;
-	page_map(_lapic_addr);
+	page_map_mmio(_lapic_addr);
 	for (i = 0; i < 4; i ++){
 		pe = page_get_pml_entry(_lapic_addr, i);
 		pe.s.cache_disable = 1;
@@ -98,7 +98,7 @@ static void ioapic_init(){
 		// Map pages to Local APIC and disable cache
 		pm_t pe;
 		uint64 l;
-		page_map(ioapic_addr);
+		page_map_mmio(ioapic_addr);
 		for (l = 0; l < 4; l ++){
 			pe = page_get_pml_entry(ioapic_addr, i);
 			pe.s.cache_disable = 1;

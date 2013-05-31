@@ -98,6 +98,12 @@ uint64 page_normalize_vaddr(uint64 vaddr);
 */
 uint64 page_map(uint64 paddr);
 /**
+* Identity map a physical address for memory maped IO (no cache!)
+* @param paddr - physical address to map
+* @return virtual address
+*/
+uint64 page_map_mmio(uint64 paddr);
+/**
 * Resolve physical address from virtual addres
 * @param vaddr - virtual address to resolve
 * @return physical address

@@ -109,17 +109,17 @@ static uint16 pci_get_secondary_bus(uint16 bus, uint8 device, uint8 function){
 
 void pci_init(){
 	uint16 bus = 0;
-	pci_header_t *header;
+	pci_header_t header;
 	pci_addr_t addr;
 	addr.raw = 0x80000000;
 	// Recursive scan - thanks OSDev Wiki
-	header = pci_get_header(addr);
-	if ((header->type & 0x80) != 0){
+	pci_get_header(&header, addr);
+	if ((header.type & 0x80) != 0){
 		// Multiple PCI host controllers
 		for (bus = 0; bus < 8; bus ++){
 			addr.s.bus = bus;
-			header = pci_get_header(addr);
-			if (header->vendor_id != 0xFFFF){
+			pci_get_header(&header, addr);
+			if (header.vendor_id != 0xFFFF){
 				// Valid PCI host controller
 				pci_enum_bus(bus);
 			}
@@ -130,42 +130,49 @@ void pci_init(){
 	}
 }
 
-pci_addr_t pci_find_device(uint8 class_id, uint8 subclass_id){
+uint8 pci_num_device(uint8 class_id, uint8 subclass_id){
 	uint16 i = 0;
+	uint8 x = 0;
+	for (i = 0; i < _cache_len; i ++){
+		if (_cache[i].class_id == class_id && _cache[i].subclass_id == subclass_id){
+			x ++;
+		}
+	}
+	return x;
+}
+
+pci_addr_t pci_get_device(uint8 class_id, uint8 subclass_id, uint8 idx){
+	uint16 i = 0;
+	uint8 x = 0;
 	pci_addr_t addr_none;
 	addr_none.raw = 0;
 	for (i = 0; i < _cache_len; i ++){
 		if (_cache[i].class_id == class_id && _cache[i].subclass_id == subclass_id){
-			return _cache[i].address;
+			if (x == idx){
+				return _cache[i].address;
+			}
+			x ++;
 		}
 	}
 	return addr_none;
 }
 
-pci_header_t * pci_get_header(pci_addr_t addr){
-	union {
-		pci_header_t header;	
-		uint32 rows[4];
-	} data;
+void pci_get_header(pci_header_t *header,pci_addr_t addr){
+	uint32 *rows = (uint32 *)header;
 	uint8 row;
 	for (row = 0; row < 4; row ++){
 		addr.s.reg = row;
-		data.rows[row] = pci_read(addr);
+		rows[row] = pci_read(addr);
 	}
-	return &data.header;
 }
 
-pci_device_t *pci_get_config(pci_addr_t addr){
-	union {
-		pci_device_t device;	
-		uint32 rows[4];
-	} data;
+void pci_get_config(pci_device_t *device, pci_addr_t addr){
+	uint32 *rows = (uint32 *)device;
 	uint8 row;
 	for (row = 0; row < 16; row ++){
 		addr.s.reg = row;
-		data.rows[row] = pci_read(addr);
+		rows[row] = pci_read(addr);
 	}
-	return &data.device;
 }
 
 uint32 pci_read(pci_addr_t addr){
@@ -201,15 +208,15 @@ static void pci_enum_bus(uint16 bus){
 
 static void pci_enum_device(uint16 bus, uint8 device){
 	uint8 function = 0;
-	pci_header_t *header;
+	pci_header_t header;
 	pci_addr_t addr;
 	addr.raw = 0x80000000;
 	addr.s.bus = bus;
 	addr.s.device = device;
 	addr.s.function = 0;
-	header = pci_get_header(addr);
-	if (header->vendor_id != 0xFFFF){
-		if ((header->type & 0x80) != 0){ 
+	pci_get_header(&header, addr);
+	if (header.vendor_id != 0xFFFF){
+		if ((header.type & 0x80) != 0){ 
 			// Multifunctional device
 			for (function = 1; function < 8; function ++){
 				pci_enum_function(bus, device, function);
@@ -223,23 +230,23 @@ static void pci_enum_device(uint16 bus, uint8 device){
 
 static void pci_enum_function(uint16 bus, uint8 device, uint8 function){
 	uint16 secondary_bus = 0;
-	pci_header_t *header;
+	pci_header_t header;
 	pci_addr_t addr;
 	addr.raw = 0x80000000;
 	addr.s.bus = bus;
 	addr.s.device = device;
 	addr.s.function = function;
-	header = pci_get_header(addr);
-	if (header->vendor_id != 0xFFFF){
+	pci_get_header(&header, addr);
+	if (header.vendor_id != 0xFFFF){
 		_cache[_cache_len].address.raw = addr.raw;
-		_cache[_cache_len].class_id = header->class_id;
-		_cache[_cache_len].subclass_id = header->subclass_id;
-		_cache[_cache_len].prog_if = header->prog_if;
-		_cache[_cache_len].type = header->type;
-		_cache[_cache_len].vendor_id = header->vendor_id;
-		_cache[_cache_len].device_id = header->device_id;
+		_cache[_cache_len].class_id = header.class_id;
+		_cache[_cache_len].subclass_id = header.subclass_id;
+		_cache[_cache_len].prog_if = header.prog_if;
+		_cache[_cache_len].type = header.type;
+		_cache[_cache_len].vendor_id = header.vendor_id;
+		_cache[_cache_len].device_id = header.device_id;
 		_cache_len ++;
-		if (header->class_id == 0x06 && header->subclass_id == 0x04){
+		if (header.class_id == 0x06 && header.subclass_id == 0x04){
 			secondary_bus = pci_get_secondary_bus(bus, device, function);
 			if (secondary_bus != bus){
 				pci_enum_bus(secondary_bus);

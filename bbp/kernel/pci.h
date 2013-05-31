@@ -66,7 +66,7 @@ typedef union {
 /**
 * PCI configuration space header structure
 */
-typedef struct {
+typedef volatile struct {
 	uint16 vendor_id;
 	uint16 device_id;
 	uint16 command;
@@ -83,7 +83,7 @@ typedef struct {
 /**
 * Standard PCI device configuration space structure
 */
-typedef struct {
+typedef volatile struct {
 	pci_header_t header;
 	uint32 bar[6];
 	uint32 cis_ptr;
@@ -103,24 +103,32 @@ typedef struct {
 */
 void pci_init();
 /**
+* Get the number of devices represented by a class and subclass
+* @param class_id - class code
+* @param subclass_id - sub-class
+* @return number of devices found
+*/
+uint8 pci_num_device(uint8 class_id, uint8 subclass_id);
+/**
 * Locate PCI device by class and subclass
 * @param class_id - class code
 * @param subclass_id - sub-class
+* @param idx - device index (@see pci_num_device)
 * @return PCI address (check if it's not 0!)
 */
-pci_addr_t pci_find_device(uint8 class_id, uint8 subclass_id);
+pci_addr_t pci_get_device(uint8 class_id, uint8 subclass_id, uint8 idx);
 /**
 * Read PCI device header
+* @param header - a pointer to header structure that needs to be filled
 * @param addr - PCI address
-* @return a pointer to header structure
 */
-pci_header_t *pci_get_header(pci_addr_t addr);
+void pci_get_header(pci_header_t *header, pci_addr_t addr);
 /**
 * Read PCI device configuration structure
+* @param device -  a pointer to configuration structure that needs to be filled
 * @param addr - PCI address
-* @return a pointer to configuration structure
 */
-pci_device_t *pci_get_config(pci_addr_t addr);
+void pci_get_config(pci_device_t *device, pci_addr_t addr);
 /**
 * Read from PCI bus/device
 * @param addr - PCI address
