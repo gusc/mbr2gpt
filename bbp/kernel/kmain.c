@@ -83,6 +83,7 @@ void kmain(){
 		pci_init();
 #if DEBUG == 1
 		//pci_list();
+		debug_clear(DC_WB);
 #endif
 		// Initialize AHCI
 		if (ahci_init()){

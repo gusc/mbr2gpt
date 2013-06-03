@@ -54,13 +54,11 @@ static void __debug_print_f(uint8 x, uint8 y, uint8 color, const char *format, v
 void debug_clear(uint8 color){
 	char *vidmem = (char *)VIDEOMEM_LOC;
 	_base_color = color;
-	uint64 i = 0;
-	while (i < (_columns * _rows * 2)){
-		vidmem[i] = ' ';
-		i ++;
-		vidmem[i] = color;
-		i ++;
-	}
+	_y = 0;
+	_x = 0;
+	uint16 fill = (_base_color << 8) + ' ';
+	// Fast clear line
+	asm volatile ("rep\n\tstosw" : : "a"(fill), "c"(_columns * _rows), "D"(vidmem));
 }
 
 void debug_scroll(){
