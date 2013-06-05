@@ -9,8 +9,8 @@ cpu: count=1:2:1, ips=9000000, quantum=16, model=core2_penryn_t9600, reset_on_tr
 memory: host=256, guest=256
 
 # ROM images
-romimage: file="C:\Program Files\Bochs-2.6\BIOS-bochs-latest"
-vgaromimage: file="C:\Program Files\Bochs-2.6\VGABIOS-lgpl-latest"
+romimage: file="C:\Bochs-2.6\BIOS-bochs-latest"
+vgaromimage: file="C:\Bochs-2.6\VGABIOS-lgpl-latest"
 
 # Boot
 boot: disk
