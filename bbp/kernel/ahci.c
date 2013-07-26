@@ -55,8 +55,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * HBA Port structure
 */
 typedef volatile struct {
-	uint64 clb;					// command list base address, 1K-uint8 aligned
-	uint64 fb;					// FIS base address, 256-uint8 aligned
+	uint64 clb;					// command list base address, 1K-byte aligned
+	uint64 fb;					// FIS base address, 256-byte aligned
 	// Interrupt status
 	struct {
 		uint32 dhrs			:1;	// Device to Host Register FIS Interrupt
@@ -194,7 +194,7 @@ typedef volatile struct {
 	} fbs;
 	uint32 reserved2[11];
 	uint32 vendor[4];			// Vendor specific
-} ahci_hba_port_t;
+} ahci_port_t; // 128 bytes
 /**
 * HBA structure
 */
@@ -281,10 +281,13 @@ typedef volatile struct {
 		uint32 ooc			:1;	// OS Ownership Change
 		uint32 bb			:1;	// BIOS Busy
 		uint32 reserved		:27;
-	} bohc;				
- 	uint8 reserved[116];
+	} bohc; // 44
+ 	uint8 reserved1[52];
+	uint8 reserved2[64];
  	uint8 vendor[96];			// Vendor specific registers
- 	ahci_hba_port_t ports[1];	// Port control registers
+	// 256 bytes
+ 	ahci_port_t ports[1];		// Port control registers
+	// Up to 4096 bytes (depending on port count)
 } ahci_hba_t;
 
 typedef volatile struct {
@@ -307,7 +310,7 @@ typedef volatile struct {
 	uint8 icc;					// Isochronous command completion
 	uint8 control;				// Control register
 	uint8 reserved2[4];
-} ahci_fis_reg_h2d_t;
+} ahci_fis_reg_h2d_t; // 20 bytes
 
 typedef volatile struct {
 	uint8 fis_type;				// FIS_TYPE_REG_D2H
@@ -328,7 +331,7 @@ typedef volatile struct {
 	uint8 countl;				// Count register, 7:0
 	uint8 counth;				// Count register, 15:8
 	uint8 reserved4[6];
-} ahci_fis_reg_d2h_t;
+} ahci_fis_reg_d2h_t; // 20 bytes
 
 typedef volatile struct {
 	uint8 fis_type;				// FIS_TYPE_DATA
@@ -336,7 +339,7 @@ typedef volatile struct {
 	uint8 reserved1			:4;	
 	uint8 reserved2[2];
 	uint32 data[1];				// Payload
-} ahci_fis_data_t;
+} ahci_fis_data_t; // 4+ bytes
 
 typedef volatile struct {
 	uint8 fis_type;				// FIS_TYPE_PIO_SETUP
@@ -361,7 +364,7 @@ typedef volatile struct {
 	uint8 e_status;				// New value of status register
 	uint16 tc;					// Transfer count
 	uint8 reserved5[2];
-} ahci_fis_pio_t;
+} ahci_fis_pio_t; // 20 bytes
 
 typedef volatile struct {
 	uint8 fis_type;				// FIS_TYPE_DMA_SETUP
@@ -376,9 +379,8 @@ typedef volatile struct {
 	uint32 dma_buff_offset;		//uint8 offset into buffer. First 2 bits must be 0
 	uint32 trans_count;			//Number of uint8s to transfer. Bit 0 must be 0
 	uint32 reserved4;
-} ahci_fis_dma_t;
+} ahci_fis_dma_t; // 28 bytes
 
-/*
 typedef volatile struct {
 	ahci_fis_dma_t dsfis;		// DMA Setup FIS
 	uint32 pad1;
@@ -386,11 +388,10 @@ typedef volatile struct {
 	uint32 pad2[3];
 	ahci_fis_reg_d2h_t rfis;	// Register – Device to Host FIS
 	uint32 pad3;
-	ahci_fis_dev_t sdbfis;		// Set Device Bit FIS
+	uint8 sdbfis;		// Set Device Bit FIS
  	uint8 ufis[64];
  	uint32 reserved[96];
-} ahci_fis_t;
-*/
+} ahci_fis_t; // 256 bytes
 
 typedef volatile struct {
 	// DW0 - Description Information
@@ -414,8 +415,16 @@ typedef volatile struct {
 	uint32	reserved[4];
 } ahci_hba_cmd_header_t;
 
+typedef volatile struct {
+	ahci_hba_t *hba;
+	uint8 port;
+} ahci_dev_t;
+
+static ahci_dev_t _ahci_dev[256];
+static uint64 _ahci_dev_count = 0;
+
 // Check device type
-static uint32 ahci_get_type(ahci_hba_port_t *port){
+static uint32 ahci_get_type(ahci_port_t *port){
 	if (port->ssts.det != 3){
 		return 0;
 	}
@@ -431,57 +440,103 @@ static uint32 ahci_get_type(ahci_hba_port_t *port){
 			return AHCI_DEV_SATA;
 	}
 }
-static void ahci_probe_port(ahci_hba_t *hba){
-	uint32 pi = hba->pi;
-	int i = 0;
-	while (i < 32) {
-		if (pi & 1) {
-			int dt = ahci_get_type(&hba->ports[i]);
-			if (dt == AHCI_DEV_SATA) {
-				debug_print(DC_WGR, "SATA drive found at port %d\n", i);
-			} else if (dt == AHCI_DEV_SATAPI) {
-				debug_print(DC_WGR, "SATAPI drive found at port %d\n", i);
-			} else if (dt == AHCI_DEV_SEMB) {
-				debug_print(DC_WGR, "SEMB drive found at port %d\n", i);
-			} else if (dt == AHCI_DEV_PM) {
-				debug_print(DC_WGR, "PM drive found at port %d\n", i);
+static void ahci_init_port(ahci_hba_t *hba){
+	uint32 dev_type = 0;
+	uint32 ports = hba->pi;
+	uint8 i = 0;
+	for (i = 0; i < 32; i ++){
+		if (ports & 1) {
+			dev_type = ahci_get_type(&hba->ports[i]);
+#if DEBUG == 1
+			switch (dev_type){
+				case AHCI_DEV_SATA:
+					debug_print(DC_WGR, "SATAPI drive found at port %d\n", i);
+					break;
+				case AHCI_DEV_SATAPI:
+					debug_print(DC_WGR, "SATAPI drive found at port %d\n", i);
+					break;
+				case AHCI_DEV_SEMB:
+					debug_print(DC_WGR, "SEMB drive found at port %d\n", i);
+					break;
+				case AHCI_DEV_PM:
+					debug_print(DC_WGR, "PM drive found at port %d\n", i);
+					break;
+				default:
+					debug_print(DC_WGR, "Unknown at port %d\n", i);
+					break;
+			}
+#endif
+			switch (dev_type){
+				case AHCI_DEV_SATA:
+				case AHCI_DEV_SATAPI:
+				case AHCI_DEV_SEMB:
+				case AHCI_DEV_PM:
+					_ahci_dev[_ahci_dev_count].hba = hba;
+					_ahci_dev[_ahci_dev_count].port = i;
+					_ahci_dev_count ++;
+					break;
 			}
 		}
-		pi >>= 1;
+		ports >>= 1;
 		i ++;
 	}
 }
 
 bool ahci_init(){
 	uint64 abar = 0;
+	uint8 i = 0;
+	uint8 dev_count = 0;
 	ahci_hba_t *hba;
 	pci_device_t dev;
+
+	dev_count = pci_num_device(0x1, 0x6);
+	if (dev_count > 0){
 #if DEBUG == 1
-	debug_print(DC_WB, "SATA Controller count: %d", pci_num_device(0x1, 0x6));
+		debug_print(DC_WB, "SATA Controller count: %d", dev_count);
 #endif
-	pci_addr_t addr = pci_get_device(0x1, 0x6, 0);
-	if (addr.raw != 0){
-		// Get AHCI controller configuration
-		pci_get_config(&dev, addr);
-		// Get ABAR (AHCI Base Address)
-		abar = (uint64)dev.bar[5];
-		// Map the page
-		page_map_mmio(abar);
-		hba = (ahci_hba_t *)abar;
+		for (i = 0; i < dev_count; i ++){
+			pci_addr_t addr = pci_get_device(0x1, 0x6, i);
+			if (addr.raw != 0){
+				// Get AHCI controller configuration
+				pci_get_config(&dev, addr);
+				// Get ABAR (AHCI Base Address)
+				abar = (uint64)dev.bar[5];
+				// Map the page
+				page_map_mmio(abar);
+				hba = (ahci_hba_t *)abar;
 #if DEBUG == 1
-		debug_print(DC_WB, "SATA controller at %u:%u", addr.s.bus, addr.s.device);
-		debug_print(DC_WB, "     BAR:0x%x", abar);
-		debug_print(DC_WB, "     Num Ports:%d", hba->cap.np);
-		debug_print(DC_WB, "     Num Commands:%d", hba->cap.ncs);
-		debug_print(DC_WB, "     64-bit addresing:%d", hba->cap.s64a);
-		debug_print(DC_WB, "     Version:%x", hba->vs);
-		ahci_probe_port(hba);
+				debug_print(DC_WB, "SATA controller at %u:%u", addr.s.bus, addr.s.device);
+				debug_print(DC_WB, "     BAR:0x%x", abar);
+				debug_print(DC_WB, "     Num Ports:%d", hba->cap.np);
+				debug_print(DC_WB, "     Num Commands:%d", hba->cap.ncs);
+				debug_print(DC_WB, "     64-bit addresing:%d", hba->cap.s64a);
+				debug_print(DC_WB, "     Version:%x", hba->vs);
 #endif
+				ahci_init_port(hba);
+			}
+		}
 		return true;
 #if DEBUG == 1
 	} else {
 		debug_print(DC_WB, "SATA controller was not found");
 #endif
+	}
+	return false;
+}
+
+bool ahci_read(uint64 idx, uint8 *buff, uint64 len){
+	if (idx < _ahci_dev_count){
+		ahci_hba_t *hba = _ahci_dev[idx].hba;
+		ahci_port_t *port = &hba->ports[_ahci_dev[idx].port];
+
+	}
+	return false;
+}
+bool ahci_write(uint64 idx, uint8 *buff, uint64 len){
+	if (idx < _ahci_dev_count){
+		ahci_hba_t *hba = _ahci_dev[idx].hba;
+		ahci_port_t *port = &hba->ports[_ahci_dev[idx].port];
+
 	}
 	return false;
 }

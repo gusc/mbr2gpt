@@ -45,14 +45,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
 void mem_copy(uint8 *dest, uint64 len, const uint8 *src){
-	while(len--){
-		*dest++ = *src++;
-	}
+	// Fast copy
+	asm volatile ("rep\n\tmovsb" : : "c"(len), "S"(src), "D"(dest));
 }
 void mem_fill(uint8 *dest, uint64 len, uint8 val){
-	while(len--){
-		*dest++ = val;
-	}
+	// Fast fill
+	asm volatile ("rep\n\tstosb" : : "c"(len), "a"(val), "D"(dest));
 }
 bool mem_compare(const uint8 *buff1, const uint8 *buff2, uint64 len){
 	while (len--){

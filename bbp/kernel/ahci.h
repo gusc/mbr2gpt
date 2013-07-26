@@ -45,5 +45,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * @return false if no AHCI controller has been found
 */
 bool ahci_init();
+/**
+* Get the number of AHCI devices connected
+* @return number of devices available
+*/
+uint64 ahci_num_dev();
+/**
+* Read data from AHCI drive
+* @param idx - device index in the device list
+* @param buff - byte buffer to write into
+* @param len - number of bytes to read
+* @todo implement
+* @return false if read failed
+*/
+bool ahci_read(uint64 idx, uint8 *buff, uint64 len);
+/**
+* Write data to AHCI drive
+* @param idx - device index in the device list
+* @param buff - byte buffer to read from
+* @param len - number of bytes to write
+* @todo implement
+* @return false if write failed
+*/
+bool ahci_write(uint64 idx, uint8 *buff, uint64 len);
 
 #endif

@@ -49,7 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * @return void
 */
 static void cpuid(uint32 type, uint32 *eax, uint32 *ebx, uint32 *ecx, uint32 *edx){
-   asm volatile("cpuid" : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx) : "a"(type));
+   asm volatile("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(type));
 }
 
 #endif
